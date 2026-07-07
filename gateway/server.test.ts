@@ -50,6 +50,7 @@ beforeAll(async () => {
       {
         key: "mock-x",
         label: "Mock x-api-key",
+        protocol: "anthropic",
         baseUrl: `http://127.0.0.1:${upPort}`,
         messagesPath: "/v1/messages",
         auth: "x-api-key",
@@ -60,6 +61,7 @@ beforeAll(async () => {
       {
         key: "mock-bearer",
         label: "Mock bearer",
+        protocol: "anthropic",
         baseUrl: `http://127.0.0.1:${upPort}/anthropic`,
         messagesPath: "/v1/messages",
         auth: "bearer",
@@ -70,6 +72,7 @@ beforeAll(async () => {
       {
         key: "mock-nokey",
         label: "Mock 未配置 key",
+        protocol: "anthropic",
         baseUrl: `http://127.0.0.1:${upPort}`,
         messagesPath: "/v1/messages",
         auth: "x-api-key",

@@ -7,3 +7,4 @@ pipeline/.snapshots/
 *.local
 *.local.json
 .DS_Store
+.context-index/

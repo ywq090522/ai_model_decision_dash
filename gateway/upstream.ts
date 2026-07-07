@@ -78,6 +78,15 @@ export function buildUpstreamRequest(
   env: NodeJS.ProcessEnv = process.env,
 ): UpstreamRequest {
   const { provider, model } = resolved;
+  // 协议分发点：openai 协议需要 Messages ⇄ chat/completions 的请求/响应/SSE 转换，
+  // 适配层实现前先在此拒绝，避免把 Anthropic 格式请求原样发给 OpenAI 兼容端点。
+  if (provider.protocol !== "anthropic") {
+    throw new GatewayError(
+      501,
+      "not_implemented",
+      `provider "${provider.key}" 使用 ${provider.protocol} 协议，网关暂未实现该协议的转换适配层（当前仅支持 anthropic 协议透传）`,
+    );
+  }
   return {
     url: `${provider.baseUrl}${provider.messagesPath}`,
     headers: buildAuthHeaders(provider, env),

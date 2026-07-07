@@ -110,7 +110,13 @@ export const CuratedDataSchema = z.object({
 export const GatewayProviderSchema = z.object({
   key: z.string().min(1),
   label: z.string().min(1),
-  /** Anthropic 兼容端点的根地址（不含 messagesPath），必须 https */
+  /**
+   * 上游端点协议。anthropic = Messages 格式原样透传（当前唯一实现）；
+   * openai = chat/completions（预留：接入 OpenAI / Gemini / OpenRouter 等
+   * 仅提供 OpenAI 兼容端点的 provider 时，在 gateway/upstream.ts 实现转换适配层）。
+   */
+  protocol: z.enum(["anthropic", "openai"]).default("anthropic"),
+  /** 兼容端点的根地址（不含 messagesPath），必须 https */
   baseUrl: z.string().regex(/^https:\/\/[^\s]+[^/]$/, "https 且不以 / 结尾"),
   /** Messages 端点路径，通常为 /v1/messages */
   messagesPath: z.string().startsWith("/"),

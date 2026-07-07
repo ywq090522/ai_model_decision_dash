@@ -164,9 +164,17 @@ curl 127.0.0.1:8788/v1/messages \
 
 改 `src/data/registry.json` 即可（Zod schema 在 `src/data/schema.ts`，网关启动即校验）：
 
-1. `providers` 加一条：`key / label / baseUrl / messagesPath / auth（x-api-key 或 bearer）/ apiKeyEnv / structuredOutput / notes`。**只接入原生 Anthropic 兼容端点**，且端点信息必须先对照官方文档核实。
+1. `providers` 加一条：`key / label / protocol / baseUrl / messagesPath / auth（x-api-key 或 bearer）/ apiKeyEnv / structuredOutput / notes`。**目前只接入原生 Anthropic 兼容端点（`protocol: "anthropic"`）**，且端点信息必须先对照官方文档核实。
 2. `models` 加一条：`id`（网关对外 id，尽量与 `models.json` 对齐以获得对照表联动）→ `provider` + `upstreamModel`（发给上游的真实 id）。
 3. 在 `.env.example` 补上新变量名，跑 `npm test`。
+
+### 扩展到 OpenAI 协议 provider（OpenAI / Gemini / OpenRouter，未实现）
+
+provider 配置已有 `protocol` 字段（`"anthropic" | "openai"`，缺省 `anthropic`）作为扩展点。当前 `openai` 协议在两个路由分发点被显式拒绝（网关 `gateway/upstream.ts` 返回 501；管线 `gateway/parse-client.ts` 抛错），接入步骤：
+
+1. 在 `gateway/upstream.ts` 的协议分发点实现 `openai` 适配层：Anthropic Messages ⇄ chat/completions 的请求体、响应体、SSE 事件三类转换（这是唯一需要写代码的地方，registry / 鉴权 / key 管理逻辑全部复用）。
+2. registry 加 `protocol: "openai"` 的 provider 条目：OpenAI 官方、Gemini（走其 OpenAI 兼容端点）、OpenRouter，以及任何 OpenAI 兼容端点——**端点路径与鉴权方式须先对照各家官方文档核实**，与现有条目同等标准。
+3. 已提供原生 Anthropic 兼容端点的厂商（DeepSeek / Kimi / GLM 等）继续走 `anthropic` 透传，不受影响。
 
 ### 边界与后续
 

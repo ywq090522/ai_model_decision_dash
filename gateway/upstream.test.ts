@@ -5,6 +5,7 @@ import { buildAuthHeaders, buildUpstreamRequest, GatewayError } from "./upstream
 const xApiKeyProvider: GatewayProvider = {
   key: "p1",
   label: "P1",
+  protocol: "anthropic",
   baseUrl: "https://api.p1.example",
   messagesPath: "/v1/messages",
   auth: "x-api-key",
@@ -75,5 +76,22 @@ describe("buildUpstreamRequest", () => {
       "authorization",
       "content-type",
     ]);
+  });
+
+  it("openai 协议 provider：适配层未实现前抛 501，不向上游透传", () => {
+    const openaiResolved = {
+      provider: { ...bearerProvider, key: "p3", protocol: "openai" as const },
+      model: { id: "front-id", provider: "p3", upstreamModel: "real-upstream-id" },
+    };
+    try {
+      buildUpstreamRequest(openaiResolved, { model: "front-id" }, { P2_API_KEY: "k" });
+      expect.unreachable();
+    } catch (e) {
+      const err = e as GatewayError;
+      expect(err).toBeInstanceOf(GatewayError);
+      expect(err.status).toBe(501);
+      expect(err.errorType).toBe("not_implemented");
+      expect(err.message).toContain("openai");
+    }
   });
 });

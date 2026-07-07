@@ -24,6 +24,14 @@ export function resolveParserTarget(modelId: string): ParserTarget {
     throw new GatewayError(404, "not_found_error", `PARSER_MODEL "${modelId}" 未在 registry 注册`);
   }
   const { provider, model } = resolved;
+  // Anthropic SDK 只支持 anthropic 协议；openai 协议 provider 不能做解析模型
+  if (provider.protocol !== "anthropic") {
+    throw new GatewayError(
+      400,
+      "invalid_request_error",
+      `PARSER_MODEL "${modelId}" 属于 ${provider.protocol} 协议 provider "${provider.key}"，解析客户端目前仅支持 anthropic 协议`,
+    );
+  }
   // SDK 固定请求 {baseURL}/v1/messages，把 provider 的 messagesPath 前缀并入 baseURL
   if (!provider.messagesPath.endsWith(SDK_PATH_SUFFIX)) {
     throw new GatewayError(

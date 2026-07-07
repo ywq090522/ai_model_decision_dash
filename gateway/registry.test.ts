@@ -15,6 +15,25 @@ describe("registry.json", () => {
     expect(r.models.length).toBeGreaterThan(0);
   });
 
+  it("protocol 字段：未写时默认 anthropic（兼容旧 registry.json）", () => {
+    const parsed = RegistrySchema.parse({
+      providers: [
+        {
+          key: "p",
+          label: "P",
+          baseUrl: "https://api.example.com",
+          messagesPath: "/v1/messages",
+          auth: "bearer",
+          apiKeyEnv: "P_API_KEY",
+          structuredOutput: false,
+          notes: "",
+        },
+      ],
+      models: [{ id: "m", provider: "p", upstreamModel: "m" }],
+    });
+    expect(parsed.providers[0].protocol).toBe("anthropic");
+  });
+
   it("resolveModel：命中返回 provider + upstreamModel", () => {
     const hit = resolveModel("deepseek-v4-flash");
     expect(hit).not.toBeNull();

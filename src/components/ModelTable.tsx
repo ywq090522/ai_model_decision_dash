@@ -77,44 +77,24 @@ export function ModelTable({
     setSort((s) => (s.key === key ? { key, dir: s.dir === 1 ? -1 : 1 } : { key, dir: 1 }));
 
   return (
-    <div className="card overflow-hidden">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-line bg-surface2 px-3 py-2 text-xs text-muted">
-        <span>状态说明：</span>
-        <span className="data-tag border-good/25 bg-good/10 text-good">支持</span>
-        <span className="data-tag border-critical/30 bg-critical/10 text-critical">不支持</span>
-        <span className="audit-tag">未核实 / unknown</span>
-        <span>价格 unknown 不参与成本计算，排序时置后。</span>
-      </div>
-      <div className="overflow-x-auto">
-      <table className="w-full min-w-[1040px] table-fixed border-collapse text-sm">
-        <colgroup>
-          <col className="w-[280px]" />
-          <col className="w-[116px]" />
-          <col className="w-[116px]" />
-          <col className="w-[96px]" />
-          <col className="w-[104px]" />
-          <col className="w-[104px]" />
-          <col className="w-[104px]" />
-          <col className="w-[104px]" />
-          <col className="w-[76px]" />
-          <col className="w-[76px]" />
-        </colgroup>
-        <thead className="sticky top-0 z-10 bg-surface2 shadow-[0_1px_0_#dce2e7]">
+    <div className="card overflow-x-auto">
+      <table className="w-full min-w-[880px] border-collapse text-sm">
+        <thead>
           <tr className="border-b border-line">
             {COLUMNS.map((c) => (
-              <th key={c.key} className={`px-3 py-2.5 ${c.numeric ? "text-right" : "text-left"}`}>
+              <th key={c.key} className="px-3 py-2.5">
                 <button className="th-btn" onClick={() => toggleSort(c.key)}>
                   {c.label}
-                  <span className="num text-[10px]">
+                  <span className="text-[9px]">
                     {sort.key === c.key ? (sort.dir === 1 ? "▲" : "▼") : "△"}
                   </span>
                 </button>
               </th>
             ))}
-            <th className="px-3 py-2.5 text-center text-xs font-semibold text-muted">
+            <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted">
               图片
             </th>
-            <th className="px-3 py-2.5 text-center text-xs font-semibold text-muted">
+            <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted">
               工具
             </th>
           </tr>
@@ -137,7 +117,6 @@ export function ModelTable({
           )}
         </tbody>
       </table>
-      </div>
     </div>
   );
 }
@@ -154,65 +133,64 @@ function ModelRow({
   return (
     <>
       <tr
-        className="group cursor-pointer border-b border-line transition-colors hover:bg-accent-wash/55"
+        className="cursor-pointer border-b border-line/60 transition-colors hover:bg-accent-wash/40"
         onClick={onToggle}
       >
-        <td className="px-3 py-2.5 align-middle">
+        <td className="px-3 py-2.5">
           <div className="flex items-center gap-2">
-            <span className="truncate font-semibold tracking-tight text-ink">{m.name}</span>
+            <span className="font-semibold">{m.name}</span>
             {!m.verified && (
               <span
-                className="audit-tag shrink-0 not-italic"
+                className="rounded bg-paper px-1 py-0.5 text-[10px] text-muted"
                 title="价格未从官方定价页核实"
               >
                 未核实
               </span>
             )}
           </div>
-          <div className="mt-1 truncate text-[11px] text-muted">
-            <span>{m.provider}</span>
-            <span className="num ml-1.5">{m.id}</span>
+          <div className="num text-[11px] text-muted">
+            {m.provider} · {m.id}
           </div>
         </td>
         <PriceCell price={m.inputPrice} currency={m.currency} />
         <PriceCell price={m.outputPrice} currency={m.currency} />
-        <td className="num px-3 py-2.5 text-right align-middle">
+        <td className="num px-3 py-2.5">
           {m.contextWindow === null ? <UnknownMark>?</UnknownMark> : formatTokens(m.contextWindow)}
         </td>
-        <td className="px-3 py-2.5 text-right align-middle"><ScoreCell value={m.scores.coding} /></td>
-        <td className="px-3 py-2.5 text-right align-middle"><ScoreCell value={m.scores.longDoc} /></td>
-        <td className="px-3 py-2.5 text-right align-middle"><ScoreCell value={m.scores.chinese} /></td>
-        <td className="px-3 py-2.5 text-right align-middle"><ScoreCell value={m.scores.agent} /></td>
-        <td className="px-3 py-2.5 text-center align-middle"><TriState value={m.vision} /></td>
-        <td className="px-3 py-2.5 text-center align-middle"><TriState value={m.toolUse} /></td>
+        <td className="px-3 py-2.5"><ScoreCell value={m.scores.coding} /></td>
+        <td className="px-3 py-2.5"><ScoreCell value={m.scores.longDoc} /></td>
+        <td className="px-3 py-2.5"><ScoreCell value={m.scores.chinese} /></td>
+        <td className="px-3 py-2.5"><ScoreCell value={m.scores.agent} /></td>
+        <td className="px-3 py-2.5"><TriState value={m.vision} /></td>
+        <td className="px-3 py-2.5"><TriState value={m.toolUse} /></td>
       </tr>
       {expanded && (
-        <tr className="border-b border-line bg-surface2/60">
+        <tr className="border-b border-line/60 bg-paper/60">
           <td colSpan={10} className="px-4 py-3 text-xs text-ink2">
-            <div className="grid gap-x-6 gap-y-2 md:grid-cols-2">
-              <span className="leading-5">
-                <b className="font-semibold text-ink">说明：</b>
-                <span className="ml-2">{m.notes}</span>
+            <div className="flex flex-wrap gap-x-8 gap-y-1.5">
+              <span>
+                <b className="text-ink">说明：</b>
+                {m.notes}
               </span>
-              <span className="leading-5">
-                <b className="font-semibold text-ink">来源：</b>
-                <span className="ml-2">{m.source}</span>
+              <span>
+                <b className="text-ink">来源：</b>
+                {m.source}
               </span>
               {m.cachedInputPrice !== null && (
-                <span className="leading-5">
-                  <b className="font-semibold text-ink">缓存输入价：</b>
-                  <span className="num ml-2">{formatPrice(m.cachedInputPrice, m.currency)}</span>/1M
+                <span>
+                  <b className="text-ink">缓存输入价：</b>
+                  <span className="num">{formatPrice(m.cachedInputPrice, m.currency)}</span>/1M
                 </span>
               )}
               {m.maxOutput !== null && (
-                <span className="leading-5">
-                  <b className="font-semibold text-ink">最大输出：</b>
-                  <span className="num ml-2">{formatTokens(m.maxOutput)}</span>
+                <span>
+                  <b className="text-ink">最大输出：</b>
+                  <span className="num">{formatTokens(m.maxOutput)}</span>
                 </span>
               )}
-              <span className="leading-5 md:col-span-2">
-                <b className="font-semibold text-ink">标签：</b>
-                <span className="ml-2">{m.tags.join(" / ")}</span>
+              <span>
+                <b className="text-ink">标签：</b>
+                {m.tags.join(" / ")}
               </span>
             </div>
           </td>
@@ -224,7 +202,7 @@ function ModelRow({
 
 function PriceCell({ price, currency }: { price: number | null; currency: "USD" | "CNY" }) {
   return (
-    <td className="num whitespace-nowrap px-3 py-2.5 text-right align-middle">
+    <td className="num px-3 py-2.5">
       {price === null ? (
         <UnknownMark>unknown</UnknownMark>
       ) : (

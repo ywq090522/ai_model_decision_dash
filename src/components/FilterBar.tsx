@@ -43,7 +43,6 @@ export function FilterBar({
     title?: string;
   }) => (
     <button
-      type="button"
       className={`chip ${active ? "chip-active" : "hover:border-muted"}`}
       onClick={onClick}
       title={title}
@@ -54,59 +53,52 @@ export function FilterBar({
   );
 
   return (
-    <div className="card p-3">
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
-        <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row">
-          <input
-            type="search"
-            value={filters.search}
-            onChange={(e) => set({ search: e.target.value })}
-            placeholder="搜索模型名 / ID / 标签…"
-            className="field min-w-0 flex-1 sm:max-w-md"
-          />
-          <select
-            value={filters.provider}
-            onChange={(e) => set({ provider: e.target.value })}
-            className="field sm:w-44"
-          >
-            <option value="all">全部厂商</option>
-            {providers.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <Toggle
-            label="支持图片"
-            active={filters.visionOnly}
-            onClick={() => set({ visionOnly: !filters.visionOnly })}
-            title="只显示已确认支持图片输入的模型"
-          />
-          <Toggle
-            label="支持工具调用"
-            active={filters.toolsOnly}
-            onClick={() => set({ toolsOnly: !filters.toolsOnly })}
-          />
-          <Toggle
-            label="免费"
-            active={filters.freeOnly}
-            onClick={() => set({ freeOnly: !filters.freeOnly })}
-          />
-          <Toggle
-            label="仅官方核实价"
-            active={filters.verifiedOnly}
-            onClick={() => set({ verifiedOnly: !filters.verifiedOnly })}
-            title="只显示价格来自官方定价页的模型"
-          />
-        </div>
-
-        <div className="num shrink-0 border-t border-line pt-2 text-left text-xs text-muted sm:text-right xl:border-l xl:border-t-0 xl:px-3 xl:py-1">
-          <span className="font-semibold text-ink">{matched}</span> / {total} 个模型
-        </div>
-      </div>
+    <div className="card flex flex-wrap items-center gap-2 p-3">
+      <input
+        type="search"
+        value={filters.search}
+        onChange={(e) => set({ search: e.target.value })}
+        placeholder="搜索模型名 / ID / 标签…"
+        className="w-56 rounded-md border border-line bg-paper px-3 py-1.5 text-sm outline-none focus:border-accent"
+      />
+      <select
+        value={filters.provider}
+        onChange={(e) => set({ provider: e.target.value })}
+        className="rounded-md border border-line bg-paper px-2 py-1.5 text-sm outline-none focus:border-accent"
+      >
+        <option value="all">全部厂商</option>
+        {providers.map((p) => (
+          <option key={p} value={p}>
+            {p}
+          </option>
+        ))}
+      </select>
+      <div className="mx-1 h-5 w-px bg-line" aria-hidden />
+      <Toggle
+        label="支持图片"
+        active={filters.visionOnly}
+        onClick={() => set({ visionOnly: !filters.visionOnly })}
+        title="只显示已确认支持图片输入的模型"
+      />
+      <Toggle
+        label="支持工具调用"
+        active={filters.toolsOnly}
+        onClick={() => set({ toolsOnly: !filters.toolsOnly })}
+      />
+      <Toggle
+        label="免费"
+        active={filters.freeOnly}
+        onClick={() => set({ freeOnly: !filters.freeOnly })}
+      />
+      <Toggle
+        label="仅官方核实价"
+        active={filters.verifiedOnly}
+        onClick={() => set({ verifiedOnly: !filters.verifiedOnly })}
+        title="只显示价格来自官方定价页的模型"
+      />
+      <span className="num ml-auto text-xs text-muted">
+        {matched} / {total} 个模型
+      </span>
     </div>
   );
 }

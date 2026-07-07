@@ -42,87 +42,87 @@ export default function App() {
     const unknownPrice = data.models.filter(
       (m) => m.inputPrice === null || m.outputPrice === null,
     ).length;
-    return { verified, free, unknownPrice, providers: providers.length };
-  }, [providers.length]);
+    return { verified, free, unknownPrice };
+  }, []);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pb-16 pt-4 sm:px-6 lg:px-8">
-      <header className="rounded-md border border-line bg-surface px-4 py-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0">
-            <h1 className="text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
-              模型决策台
+    <div className="mx-auto max-w-6xl px-4 pb-20 pt-8">
+      {/* 页头 */}
+      <header className="border-b-2 border-ink pb-5">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-accent">
+              Model Spec Sheet · 选型决策台
+            </div>
+            <h1 className="mt-1 text-3xl font-bold tracking-tight">
+              AI Model Decision Dashboard
             </h1>
-            <p className="mt-1 max-w-3xl text-sm leading-6 text-ink2">
-              AI Model Decision Dashboard：对比价格、上下文、工具/图片能力和场景推荐，快速缩小候选模型。
+            <p className="mt-2 max-w-2xl text-sm text-ink2">
+              主流大模型价格 / 上下文 / 能力对照表，配成本计算器与场景推荐。
+              查不到的数据一律标 <i className="text-muted">unknown</i>，绝不编造。
             </p>
           </div>
-
-          <dl className="flex flex-wrap gap-x-4 gap-y-1 text-sm lg:justify-end">
-            <Stat label="模型" value={String(data.models.length)} />
-            <Stat label="厂商" value={String(stats.providers)} />
-            <Stat label="官方核实价" value={String(stats.verified)} tone="accent" />
-            <Stat label="价格 unknown" value={String(stats.unknownPrice)} tone="audit" />
-            <Stat label="免费" value={String(stats.free)} />
-            <Stat label="更新" value={data.meta.updatedAt} />
+          <dl className="flex gap-6 text-right">
+            <Stat label="收录模型" value={String(data.models.length)} />
+            <Stat label="官方核实价" value={String(stats.verified)} />
+            <Stat label="免费模型" value={String(stats.free)} />
+            <Stat label="数据更新" value={data.meta.updatedAt} small />
           </dl>
         </div>
-
-        <p className="mt-3 rounded-md border border-audit/25 bg-audit-wash px-3 py-2 text-xs leading-5 text-audit-deep">
-          数据完整性：unknown 表示未能从官方渠道核实；缺失价格不参与成本计算，排序时置后。
-        </p>
       </header>
 
-      <main>
-        <Section
-          id="table"
-          eyebrow="对比"
-          title="模型对照表"
-          desc="价格单位为每百万 tokens；unknown 字段保留缺口，并在排序中置后。"
-        >
-          <div className="space-y-3">
-            <FilterBar
-              filters={filters}
-              onChange={setFilters}
-              providers={providers}
-              matched={filtered.length}
-              total={data.models.length}
-            />
-            <ModelTable models={filtered} cnyPerUsd={cnyPerUsd} />
-          </div>
-        </Section>
-
-        <Section
-          id="cost"
-          eyebrow="估算"
-          title="成本计算器"
-          desc="按筛选后的模型和当前汇率估算请求成本；人民币计价模型先换算为 USD。"
-        >
-          <CostCalculator
-            models={filtered}
-            cnyPerUsd={cnyPerUsd}
-            onCnyPerUsdChange={(v) => setCnyPerUsd(v > 0 ? v : cnyPerUsd)}
+      {/* 模型对照表 */}
+      <Section
+        id="table"
+        eyebrow="01 · Compare"
+        title="模型对照表"
+        desc="点击表头排序（unknown 永远排最后），点击行展开备注与数据来源。价格单位：每百万 tokens。"
+      >
+        <div className="space-y-3">
+          <FilterBar
+            filters={filters}
+            onChange={setFilters}
+            providers={providers}
+            matched={filtered.length}
+            total={data.models.length}
           />
-        </Section>
+          <ModelTable models={filtered} cnyPerUsd={cnyPerUsd} />
+        </div>
+      </Section>
 
-        <Section
-          id="presets"
-          eyebrow="预设"
-          title="预设模式"
-          desc="三套权重覆盖预算、编码和长文档分析，每条结果保留入选理由。"
-        >
-          <Presets models={data.models} cnyPerUsd={cnyPerUsd} />
-        </Section>
+      {/* 成本计算器 */}
+      <Section
+        id="cost"
+        eyebrow="02 · Estimate"
+        title="成本计算器"
+        desc="输入你的用量，估算各模型总花费（受上方筛选影响；人民币计价模型按可调汇率换算）。"
+      >
+        <CostCalculator
+          models={filtered}
+          cnyPerUsd={cnyPerUsd}
+          onCnyPerUsdChange={(v) => setCnyPerUsd(v > 0 ? v : cnyPerUsd)}
+        />
+      </Section>
 
-        <Section
-          id="scenarios"
-          eyebrow="场景"
-          title="按场景推荐"
-          desc="按使用场景输出 Top 5 候选和主要依据。"
-        >
-          <Scenarios models={data.models} cnyPerUsd={cnyPerUsd} />
-        </Section>
-      </main>
+      {/* 预设模式 */}
+      <Section
+        id="presets"
+        eyebrow="03 · Presets"
+        title="预设模式"
+        desc="三套现成的排序策略，每个模型都附带入选理由。"
+      >
+        <Presets models={data.models} cnyPerUsd={cnyPerUsd} />
+      </Section>
+
+      {/* 场景推荐 */}
+      <Section
+        id="scenarios"
+        eyebrow="04 · Recommend"
+        title="按场景推荐"
+        desc="选择你的使用场景，查看 Top 5 推荐与理由。"
+      >
+        <Scenarios models={data.models} cnyPerUsd={cnyPerUsd} />
+      </Section>
 
       <footer className="mt-12 border-t border-line pt-4 text-[11px] leading-relaxed text-muted">
         <p>{data.meta.unknownNote}</p>
@@ -135,23 +135,11 @@ export default function App() {
   );
 }
 
-function Stat({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone?: "accent" | "audit";
-}) {
-  const valueColor =
-    tone === "accent" ? "text-accent-deep" : tone === "audit" ? "text-audit-deep" : "text-ink";
+function Stat({ label, value, small }: { label: string; value: string; small?: boolean }) {
   return (
-    <div className="inline-flex items-baseline gap-1.5 whitespace-nowrap">
-      <dt className="text-xs text-muted">{label}</dt>
-      <dd className={`num text-sm font-semibold ${valueColor}`}>
-        {value}
-      </dd>
+    <div>
+      <dt className="text-[10px] uppercase tracking-wider text-muted">{label}</dt>
+      <dd className={`num font-semibold ${small ? "text-sm" : "text-2xl"}`}>{value}</dd>
     </div>
   );
 }

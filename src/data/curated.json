@@ -1,0 +1,818 @@
+{
+  "meta": {
+    "defaultCnyPerUsd": 7.2,
+    "cnyRateNote": "汇率为估算值，可在成本计算器中调整。人民币计价模型的美元价格按此换算。",
+    "scoreNote": "scores 为编辑评分（0-5），基于公开基准与社区口碑的主观判断，不是官方数据，欢迎按团队实测修改。",
+    "unknownNote": "价格或参数为 null 表示未能从官方渠道核实（unknown），绝不编造。verified=true 表示价格来自官方定价页。"
+  },
+  "models": [
+    {
+      "id": "claude-fable-5",
+      "name": "Claude Fable 5",
+      "provider": "Anthropic",
+      "currency": "USD",
+      "aliases": [],
+      "vision": true,
+      "toolUse": true,
+      "scores": {
+        "coding": 5,
+        "longDoc": 5,
+        "chat": 5,
+        "agent": 5,
+        "chinese": 4
+      },
+      "tags": [
+        "旗舰",
+        "长上下文",
+        "推理"
+      ],
+      "notes": "Anthropic 最强通用模型，thinking 常开；适合最难的推理与长程 Agent 任务。",
+      "fallback": {
+        "inputPrice": 10,
+        "outputPrice": 50,
+        "cachedInputPrice": null,
+        "contextWindow": 1000000,
+        "maxOutput": 128000,
+        "source": "Anthropic 官方定价（2026-06 缓存）",
+        "verified": true
+      }
+    },
+    {
+      "id": "claude-opus-4-8",
+      "name": "Claude Opus 4.8",
+      "provider": "Anthropic",
+      "currency": "USD",
+      "aliases": [],
+      "vision": true,
+      "toolUse": true,
+      "scores": {
+        "coding": 5,
+        "longDoc": 5,
+        "chat": 5,
+        "agent": 5,
+        "chinese": 4
+      },
+      "tags": [
+        "旗舰",
+        "长上下文",
+        "代码"
+      ],
+      "notes": "长程 Agent / 编码主力，1M 上下文无长文本加价。",
+      "fallback": {
+        "inputPrice": 5,
+        "outputPrice": 25,
+        "cachedInputPrice": null,
+        "contextWindow": 1000000,
+        "maxOutput": 128000,
+        "source": "Anthropic 官方定价（2026-06 缓存）",
+        "verified": true
+      }
+    },
+    {
+      "id": "claude-sonnet-5",
+      "name": "Claude Sonnet 5",
+      "provider": "Anthropic",
+      "currency": "USD",
+      "aliases": [],
+      "vision": true,
+      "toolUse": true,
+      "scores": {
+        "coding": 5,
+        "longDoc": 4,
+        "chat": 4,
+        "agent": 4,
+        "chinese": 4
+      },
+      "tags": [
+        "性价比",
+        "代码",
+        "长上下文"
+      ],
+      "notes": "接近 Opus 的编码/Agent 能力；2026-08-31 前有 $2/$10 首发优惠价。",
+      "fallback": {
+        "inputPrice": 3,
+        "outputPrice": 15,
+        "cachedInputPrice": null,
+        "contextWindow": 1000000,
+        "maxOutput": 128000,
+        "source": "Anthropic 官方定价（2026-06 缓存）",
+        "verified": true
+      }
+    },
+    {
+      "id": "claude-sonnet-4-6",
+      "name": "Claude Sonnet 4.6",
+      "provider": "Anthropic",
+      "currency": "USD",
+      "aliases": [],
+      "vision": true,
+      "toolUse": true,
+      "scores": {
+        "coding": 4,
+        "longDoc": 4,
+        "chat": 4,
+        "agent": 4,
+        "chinese": 4
+      },
+      "tags": [
+        "上一代",
+        "长上下文"
+      ],
+      "notes": "上一代 Sonnet，仍在服务；新项目建议直接用 Sonnet 5。",
+      "fallback": {
+        "inputPrice": 3,
+        "outputPrice": 15,
+        "cachedInputPrice": null,
+        "contextWindow": 1000000,
+        "maxOutput": 128000,
+        "source": "Anthropic 官方定价（2026-06 缓存）",
+        "verified": true
+      }
+    },
+    {
+      "id": "claude-haiku-4-5",
+      "name": "Claude Haiku 4.5",
+      "provider": "Anthropic",
+      "currency": "USD",
+      "aliases": [],
+      "vision": true,
+      "toolUse": true,
+      "scores": {
+        "coding": 3,
+        "longDoc": 3,
+        "chat": 4,
+        "agent": 3,
+        "chinese": 3
+      },
+      "tags": [
+        "低成本",
+        "快速"
+      ],
+      "notes": "简单任务、分类、高并发场景的低价选择。",
+      "fallback": {
+        "inputPrice": 1,
+        "outputPrice": 5,
+        "cachedInputPrice": null,
+        "contextWindow": 200000,
+        "maxOutput": 64000,
+        "source": "Anthropic 官方定价（2026-06 缓存）",
+        "verified": true
+      }
+    },
+    {
+      "id": "gpt-5.5",
+      "name": "GPT-5.5",
+      "provider": "OpenAI",
+      "currency": "USD",
+      "aliases": [],
+      "vision": true,
+      "toolUse": true,
+      "scores": {
+        "coding": 5,
+        "longDoc": 4,
+        "chat": 5,
+        "agent": 5,
+        "chinese": 4
+      },
+      "tags": [
+        "旗舰"
+      ],
+      "notes": "OpenAI 当前旗舰。官方定价页未标注上下文长度（第三方称 1M，未核实）。",
+      "fallback": {
+        "inputPrice": 5,
+        "outputPrice": 30,
+        "cachedInputPrice": 0.5,
+        "contextWindow": null,
+        "maxOutput": null,
+        "source": "developers.openai.com/api/docs/pricing（2026-07-07 抓取）",
+        "verified": true
+      }
+    },
+    {
+      "id": "gpt-5.4",
+      "name": "GPT-5.4",
+      "provider": "OpenAI",
+      "currency": "USD",
+      "aliases": [],
+      "vision": true,
+      "toolUse": true,
+      "scores": {
+        "coding": 4,
+        "longDoc": 4,
+        "chat": 4,
+        "agent": 4,
+        "chinese": 4
+      },
+      "tags": [
+        "性价比"
+      ],
+      "notes": "中端主力，价格为 GPT-5.5 的一半。上下文长度未核实。",
+      "fallback": {
+        "inputPrice": 2.5,
+        "outputPrice": 15,
+        "cachedInputPrice": 0.25,
+        "contextWindow": null,
+        "maxOutput": null,
+        "source": "developers.openai.com/api/docs/pricing（2026-07-07 抓取）",
+        "verified": true
+      }
+    },
+    {
+      "id": "gpt-5.4-mini",
+      "name": "GPT-5.4 mini",
+      "provider": "OpenAI",
+      "currency": "USD",
+      "aliases": [],
+      "vision": true,
+      "toolUse": true,
+      "scores": {
+        "coding": 3,
+        "longDoc": 3,
+        "chat": 4,
+        "agent": 3,
+        "chinese": 3
+      },
+      "tags": [
+        "低成本"
+      ],
+      "notes": "日常任务的低价选择。上下文长度未核实。",
+      "fallback": {
+        "inputPrice": 0.75,
+        "outputPrice": 4.5,
+        "cachedInputPrice": null,
+        "contextWindow": null,
+        "maxOutput": null,
+        "source": "developers.openai.com/api/docs/pricing（2026-07-07 抓取）",
+        "verified": true
+      }
+    },
+    {
+      "id": "gpt-5.4-nano",
+      "name": "GPT-5.4 nano",
+      "provider": "OpenAI",
+      "currency": "USD",
+      "aliases": [],
+      "vision": true,
+      "toolUse": true,
+      "scores": {
+        "coding": 2,
+        "longDoc": 2,
+        "chat": 3,
+        "agent": 2,
+        "chinese": 3
+      },
+      "tags": [
+        "超低成本",
+        "快速"
+      ],
+      "notes": "分类、抽取等轻量任务。上下文长度未核实。",
+      "fallback": {
+        "inputPrice": 0.2,
+        "outputPrice": 1.25,
+        "cachedInputPrice": null,
+        "contextWindow": null,
+        "maxOutput": null,
+        "source": "developers.openai.com/api/docs/pricing（2026-07-07 抓取）",
+        "verified": true
+      }
+    },
+    {
+      "id": "gpt-5.3-codex",
+      "name": "GPT-5.3 Codex",
+      "provider": "OpenAI",
+      "currency": "USD",
+      "aliases": [],
+      "vision": null,
+      "toolUse": true,
+      "scores": {
+        "coding": 5,
+        "longDoc": 3,
+        "chat": 3,
+        "agent": 4,
+        "chinese": 3
+      },
+      "tags": [
+        "代码",
+        "专用"
+      ],
+      "notes": "编码专用模型。是否支持图片未核实。",
+      "fallback": {
+        "inputPrice": 1.75,
+        "outputPrice": 14,
+        "cachedInputPrice": null,
+        "contextWindow": null,
+        "maxOutput": null,
+        "source": "developers.openai.com/api/docs/pricing（2026-07-07 抓取）",
+        "verified": true
+      }
+    },
+    {
+      "id": "gemini-3.1-pro-preview",
+      "name": "Gemini 3.1 Pro (Preview)",
+      "provider": "Google",
+      "currency": "USD",
+      "aliases": [
+        "gemini-3.1-pro"
+      ],
+      "vision": true,
+      "toolUse": true,
+      "scores": {
+        "coding": 4,
+        "longDoc": 5,
+        "chat": 4,
+        "agent": 4,
+        "chinese": 4
+      },
+      "tags": [
+        "旗舰",
+        "长上下文",
+        "多模态"
+      ],
+      "notes": "分级计价：≤200K 为 $2/$12，>200K 为 $4/$18（说明上下文超 200K，总长度未官方标注）。",
+      "fallback": {
+        "inputPrice": 2,
+        "outputPrice": 12,
+        "cachedInputPrice": null,
+        "contextWindow": null,
+        "maxOutput": null,
+        "source": "ai.google.dev/gemini-api/docs/pricing（2026-07-07 抓取）",
+        "verified": true
+      }
+    },
+    {
+      "id": "gemini-3.5-flash",
+      "name": "Gemini 3.5 Flash",
+      "provider": "Google",
+      "currency": "USD",
+      "aliases": [],
+      "vision": true,
+      "toolUse": true,
+      "scores": {
+        "coding": 4,
+        "longDoc": 4,
+        "chat": 4,
+        "agent": 4,
+        "chinese": 4
+      },
+      "tags": [
+        "性价比",
+        "多模态"
+      ],
+      "notes": "Gemini 3 系最新 Flash。上下文长度未核实。",
+      "fallback": {
+        "inputPrice": 1.5,
+        "outputPrice": 9,
+        "cachedInputPrice": null,
+        "contextWindow": null,
+        "maxOutput": null,
+        "source": "ai.google.dev/gemini-api/docs/pricing（2026-07-07 抓取）",
+        "verified": true
+      }
+    },
+    {
+      "id": "gemini-3-flash-preview",
+      "name": "Gemini 3 Flash (Preview)",
+      "provider": "Google",
+      "currency": "USD",
+      "aliases": [
+        "gemini-3-flash"
+      ],
+      "vision": true,
+      "toolUse": true,
+      "scores": {
+        "coding": 3,
+        "longDoc": 4,
+        "chat": 4,
+        "agent": 3,
+        "chinese": 4
+      },
+      "tags": [
+        "低成本",
+        "多模态"
+      ],
+      "notes": "上下文长度未核实。",
+      "fallback": {
+        "inputPrice": 0.5,
+        "outputPrice": 3,
+        "cachedInputPrice": null,
+        "contextWindow": null,
+        "maxOutput": null,
+        "source": "ai.google.dev/gemini-api/docs/pricing（2026-07-07 抓取）",
+        "verified": true
+      }
+    },
+    {
+      "id": "gemini-2.5-pro",
+      "name": "Gemini 2.5 Pro",
+      "provider": "Google",
+      "currency": "USD",
+      "aliases": [],
+      "vision": true,
+      "toolUse": true,
+      "scores": {
+        "coding": 4,
+        "longDoc": 5,
+        "chat": 4,
+        "agent": 4,
+        "chinese": 4
+      },
+      "tags": [
+        "长上下文",
+        "多模态"
+      ],
+      "notes": "分级计价：>200K 输入 $2.50 / 输出 $15。1M 上下文，长文档性价比高。",
+      "fallback": {
+        "inputPrice": 1.25,
+        "outputPrice": 10,
+        "cachedInputPrice": null,
+        "contextWindow": 1000000,
+        "maxOutput": 65536,
+        "source": "ai.google.dev/gemini-api/docs/pricing（2026-07-07 抓取）",
+        "verified": true
+      }
+    },
+    {
+      "id": "gemini-2.5-flash",
+      "name": "Gemini 2.5 Flash",
+      "provider": "Google",
+      "currency": "USD",
+      "aliases": [],
+      "vision": true,
+      "toolUse": true,
+      "scores": {
+        "coding": 3,
+        "longDoc": 4,
+        "chat": 4,
+        "agent": 3,
+        "chinese": 4
+      },
+      "tags": [
+        "低成本",
+        "长上下文",
+        "多模态"
+      ],
+      "notes": "1M 上下文 + 极低价格，长文档批量处理利器。",
+      "fallback": {
+        "inputPrice": 0.3,
+        "outputPrice": 2.5,
+        "cachedInputPrice": null,
+        "contextWindow": 1000000,
+        "maxOutput": 65536,
+        "source": "ai.google.dev/gemini-api/docs/pricing（2026-07-07 抓取）",
+        "verified": true
+      }
+    },
+    {
+      "id": "gemini-2.5-flash-lite",
+      "name": "Gemini 2.5 Flash-Lite",
+      "provider": "Google",
+      "currency": "USD",
+      "aliases": [],
+      "vision": true,
+      "toolUse": true,
+      "scores": {
+        "coding": 2,
+        "longDoc": 3,
+        "chat": 3,
+        "agent": 2,
+        "chinese": 3
+      },
+      "tags": [
+        "超低成本",
+        "长上下文"
+      ],
+      "notes": "最便宜的 1M 上下文模型之一。",
+      "fallback": {
+        "inputPrice": 0.1,
+        "outputPrice": 0.4,
+        "cachedInputPrice": null,
+        "contextWindow": 1000000,
+        "maxOutput": 65536,
+        "source": "ai.google.dev/gemini-api/docs/pricing（2026-07-07 抓取）",
+        "verified": true
+      }
+    },
+    {
+      "id": "deepseek-v4-pro",
+      "name": "DeepSeek V4 Pro",
+      "provider": "DeepSeek",
+      "currency": "USD",
+      "aliases": [
+        "deepseek-reasoner"
+      ],
+      "vision": null,
+      "toolUse": true,
+      "scores": {
+        "coding": 5,
+        "longDoc": 4,
+        "chat": 4,
+        "agent": 4,
+        "chinese": 5
+      },
+      "tags": [
+        "性价比",
+        "代码",
+        "中文",
+        "长上下文"
+      ],
+      "notes": "编码/推理能力强且价格极低；缓存命中输入近乎免费。是否支持图片未核实。",
+      "fallback": {
+        "inputPrice": 0.435,
+        "outputPrice": 0.87,
+        "cachedInputPrice": 0.003625,
+        "contextWindow": 1000000,
+        "maxOutput": 384000,
+        "source": "api-docs.deepseek.com/quick_start/pricing（2026-07-07 抓取）",
+        "verified": true
+      }
+    },
+    {
+      "id": "deepseek-v4-flash",
+      "name": "DeepSeek V4 Flash",
+      "provider": "DeepSeek",
+      "currency": "USD",
+      "aliases": [
+        "deepseek-chat"
+      ],
+      "vision": null,
+      "toolUse": true,
+      "scores": {
+        "coding": 4,
+        "longDoc": 4,
+        "chat": 4,
+        "agent": 3,
+        "chinese": 5
+      },
+      "tags": [
+        "超低成本",
+        "中文",
+        "长上下文"
+      ],
+      "notes": "1M 上下文 + 白菜价，中文日常与批量任务首选之一。是否支持图片未核实。",
+      "fallback": {
+        "inputPrice": 0.14,
+        "outputPrice": 0.28,
+        "cachedInputPrice": 0.0028,
+        "contextWindow": 1000000,
+        "maxOutput": 384000,
+        "source": "api-docs.deepseek.com/quick_start/pricing（2026-07-07 抓取）",
+        "verified": true
+      }
+    },
+    {
+      "id": "qwen3-max",
+      "name": "Qwen3-Max",
+      "provider": "Qwen (阿里云)",
+      "currency": "USD",
+      "aliases": [
+        "qwen/qwen3-max"
+      ],
+      "vision": false,
+      "toolUse": true,
+      "scores": {
+        "coding": 4,
+        "longDoc": 4,
+        "chat": 4,
+        "agent": 4,
+        "chinese": 5
+      },
+      "tags": [
+        "中文",
+        "旗舰"
+      ],
+      "notes": "阿里旗舰。按输入长度分级计价，此处为最低档（≤32K）价格；不同来源报价不一致，以 Model Studio 控制台为准。视觉任务需用 Qwen3-VL 系列。",
+      "fallback": {
+        "inputPrice": 1.2,
+        "outputPrice": 6,
+        "cachedInputPrice": null,
+        "contextWindow": 262144,
+        "maxOutput": null,
+        "source": "第三方汇总（eesel/DeepInfra，2026-06），官方页未能直接核实",
+        "verified": false
+      }
+    },
+    {
+      "id": "qwen3-coder-plus",
+      "name": "Qwen3-Coder-Plus",
+      "provider": "Qwen (阿里云)",
+      "currency": "USD",
+      "aliases": [
+        "qwen/qwen3-coder-plus"
+      ],
+      "vision": false,
+      "toolUse": true,
+      "scores": {
+        "coding": 4,
+        "longDoc": 3,
+        "chat": 3,
+        "agent": 4,
+        "chinese": 5
+      },
+      "tags": [
+        "代码",
+        "中文"
+      ],
+      "notes": "阿里编码专用模型。当前价格未能核实（unknown），请查阿里云 Model Studio。",
+      "fallback": {
+        "inputPrice": null,
+        "outputPrice": null,
+        "cachedInputPrice": null,
+        "contextWindow": null,
+        "maxOutput": null,
+        "source": "unknown",
+        "verified": false
+      }
+    },
+    {
+      "id": "kimi-k2.6",
+      "name": "Kimi K2.6",
+      "provider": "Moonshot (Kimi)",
+      "currency": "USD",
+      "aliases": [
+        "moonshotai/kimi-k2.6"
+      ],
+      "vision": null,
+      "toolUse": true,
+      "scores": {
+        "coding": 4,
+        "longDoc": 4,
+        "chat": 4,
+        "agent": 4,
+        "chinese": 5
+      },
+      "tags": [
+        "中文",
+        "Agent"
+      ],
+      "notes": "Moonshot 最新旗舰（2026-04），Agent/工具调用表现好。价格来自第三方汇总，未从官方页直接核实。",
+      "fallback": {
+        "inputPrice": 0.95,
+        "outputPrice": 4,
+        "cachedInputPrice": 0.16,
+        "contextWindow": 131072,
+        "maxOutput": null,
+        "source": "第三方汇总（pricepertoken/tokenmix，2026-06）",
+        "verified": false
+      }
+    },
+    {
+      "id": "kimi-k2.5",
+      "name": "Kimi K2.5",
+      "provider": "Moonshot (Kimi)",
+      "currency": "USD",
+      "aliases": [
+        "moonshotai/kimi-k2.5"
+      ],
+      "vision": null,
+      "toolUse": true,
+      "scores": {
+        "coding": 4,
+        "longDoc": 4,
+        "chat": 4,
+        "agent": 3,
+        "chinese": 5
+      },
+      "tags": [
+        "中文",
+        "性价比"
+      ],
+      "notes": "价格来自第三方汇总，未从官方页直接核实；上下文长度 unknown。",
+      "fallback": {
+        "inputPrice": 0.6,
+        "outputPrice": 3,
+        "cachedInputPrice": 0.1,
+        "contextWindow": null,
+        "maxOutput": null,
+        "source": "第三方汇总（OpenRouter/eesel，2026-06）",
+        "verified": false
+      }
+    },
+    {
+      "id": "doubao-2.1-pro",
+      "name": "豆包 2.1 Pro",
+      "provider": "豆包 (火山引擎)",
+      "currency": "CNY",
+      "aliases": [],
+      "vision": null,
+      "toolUse": true,
+      "scores": {
+        "coding": 4,
+        "longDoc": 4,
+        "chat": 4,
+        "agent": 4,
+        "chinese": 5
+      },
+      "tags": [
+        "中文",
+        "旗舰"
+      ],
+      "notes": "字节最新旗舰（人民币计价：¥6 / ¥30 每百万 token）。上下文长度与多模态支持未核实。",
+      "fallback": {
+        "inputPrice": 6,
+        "outputPrice": 30,
+        "cachedInputPrice": 1.2,
+        "contextWindow": null,
+        "maxOutput": null,
+        "source": "火山引擎公开报道（2026-06），未从官方定价页直接核实",
+        "verified": false
+      }
+    },
+    {
+      "id": "doubao-seed-2.0-pro",
+      "name": "豆包 Seed 2.0 Pro",
+      "provider": "豆包 (火山引擎)",
+      "currency": "CNY",
+      "aliases": [],
+      "vision": null,
+      "toolUse": true,
+      "scores": {
+        "coding": 4,
+        "longDoc": 4,
+        "chat": 4,
+        "agent": 3,
+        "chinese": 5
+      },
+      "tags": [
+        "中文",
+        "性价比"
+      ],
+      "notes": "人民币计价：¥3.2 / ¥16 每百万 token。上下文长度未核实。",
+      "fallback": {
+        "inputPrice": 3.2,
+        "outputPrice": 16,
+        "cachedInputPrice": null,
+        "contextWindow": null,
+        "maxOutput": null,
+        "source": "第三方评测汇总（2026-06），未从官方定价页直接核实",
+        "verified": false
+      }
+    },
+    {
+      "id": "openrouter-deepseek-r1-free",
+      "name": "DeepSeek R1 (free)",
+      "provider": "OpenRouter",
+      "currency": "USD",
+      "aliases": [
+        "deepseek/deepseek-r1:free",
+        "deepseek-r1:free"
+      ],
+      "vision": false,
+      "toolUse": null,
+      "scores": {
+        "coding": 4,
+        "longDoc": 3,
+        "chat": 3,
+        "agent": 2,
+        "chinese": 5
+      },
+      "tags": [
+        "免费",
+        "推理",
+        "中文"
+      ],
+      "notes": "OpenRouter 免费池（:free 后缀），限速约 20 req/min、200 req/day；免费端点是否支持工具调用视上游而定。",
+      "fallback": {
+        "inputPrice": 0,
+        "outputPrice": 0,
+        "cachedInputPrice": null,
+        "contextWindow": 163840,
+        "maxOutput": null,
+        "source": "openrouter.ai（2026-07 搜索结果）",
+        "verified": false
+      }
+    },
+    {
+      "id": "openrouter-llama-3.3-70b-free",
+      "name": "Llama 3.3 70B (free)",
+      "provider": "OpenRouter",
+      "currency": "USD",
+      "aliases": [
+        "meta-llama/llama-3.3-70b-instruct:free",
+        "llama-3.3-70b-instruct:free"
+      ],
+      "vision": false,
+      "toolUse": null,
+      "scores": {
+        "coding": 3,
+        "longDoc": 3,
+        "chat": 3,
+        "agent": 2,
+        "chinese": 2
+      },
+      "tags": [
+        "免费",
+        "开源"
+      ],
+      "notes": "OpenRouter 免费池，限速同上。OpenRouter 付费模型为原价转发 + 充值时 5.5% 手续费。",
+      "fallback": {
+        "inputPrice": 0,
+        "outputPrice": 0,
+        "cachedInputPrice": null,
+        "contextWindow": 131072,
+        "maxOutput": null,
+        "source": "openrouter.ai（2026-07 搜索结果）",
+        "verified": false
+      }
+    }
+  ]
+}

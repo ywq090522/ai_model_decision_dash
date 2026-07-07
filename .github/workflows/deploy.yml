@@ -1,0 +1,57 @@
+# GitHub Pages 部署：push main（含管线自动 commit）→ 构建 → 发布。
+# 构建后自检产物无密钥痕迹（本项目前端本就不含任何 key，这是兜底防线）。
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npx vitest run
+
+      - name: Build (base path = /<repo>/)
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/
+        run: npm run build
+
+      - name: Assert no secrets in bundle
+        run: |
+          if grep -rE "sk-ant-|ANTHROPIC_API_KEY" dist/; then
+            echo "::error::构建产物疑似包含密钥，中止部署"
+            exit 1
+          fi
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

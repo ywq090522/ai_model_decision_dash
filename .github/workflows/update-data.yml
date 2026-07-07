@@ -1,0 +1,98 @@
+# 数据更新管线：每周一 02:00 UTC 抓取官方定价页 → 解析/回查/校验 → 更新 models.json + 变更报告。
+# 正常变更直接 commit 到 main；检测到异常（价格波动 >±50%、回查拦截率过高）时改开 PR 人工审核。
+# 密钥：仅 ANTHROPIC_API_KEY（repo Settings → Secrets → Actions），前端代码与构建产物永不接触。
+name: Update model data
+
+on:
+  schedule:
+    - cron: "0 2 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: update-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Run tests (guards pipeline logic)
+        run: npx vitest run
+
+      - name: Run data pipeline
+        id: pipeline
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          set +e
+          npm run pipeline
+          code=$?
+          set -e
+          if [ "$code" != "0" ] && [ "$code" != "2" ]; then
+            echo "pipeline hard failure (exit $code)"
+            exit "$code"
+          fi
+          echo "anomaly=$([ "$code" = "2" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - name: Upload source snapshots (audit trail)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-snapshots
+          path: pipeline/.snapshots/
+          if-no-files-found: ignore
+          retention-days: 90
+
+      - name: Detect changes
+        id: diff
+        run: |
+          if git diff --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Read report for commit/PR body
+        id: report
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          latest=$(ls -1 reports/*.md | sort | tail -1)
+          echo "path=$latest" >> "$GITHUB_OUTPUT"
+
+      # 正常路径：直接提交到 main
+      - name: Commit to main
+        if: steps.diff.outputs.changed == 'true' && steps.pipeline.outputs.anomaly == 'false'
+        run: |
+          git config user.name "data-pipeline[bot]"
+          git config user.email "data-pipeline[bot]@users.noreply.github.com"
+          git add src/data/models.json reports/
+          git commit -m "data: weekly model pricing update $(date -u +%F)" \
+            -m "$(head -40 "${{ steps.report.outputs.path }}")"
+          git push
+
+      # 异常路径：开 PR 人工审核（LLM 不是事实来源，异常必须过人）
+      - name: Open PR for review (anomaly detected)
+        if: steps.diff.outputs.changed == 'true' && steps.pipeline.outputs.anomaly == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: data-update-review
+          title: "⚠️ 数据更新异常，需人工审核（${{ github.run_id }}）"
+          body-path: ${{ steps.report.outputs.path }}
+          commit-message: "data: model pricing update (anomaly, needs review)"
+          add-paths: |
+            src/data/models.json
+            reports/
+          labels: data-review

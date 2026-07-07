@@ -1,0 +1,189 @@
+# AI Model Decision Dashboard
+
+大模型选型决策台：对比主流模型的价格 / 上下文 / 能力，估算使用成本，并按场景给出推荐。
+
+架构：**静态前端 + 自动数据更新管线**。前端是纯静态站（Vite + React + TypeScript + Tailwind CSS），只消费 `src/data/models.json`，**不含任何 API Key**；数据由 GitHub Actions 每周抓取官方定价页自动更新（Zod 校验 + 变更报告），push 到 main 后自动部署 GitHub Pages。
+
+## 本地运行
+
+```bash
+npm install
+npm run dev        # 开发模式，默认 http://localhost:5173
+```
+
+其他命令：
+
+```bash
+npm run build         # 类型检查 + 生产构建（输出到 dist/）
+npm run preview       # 预览生产构建
+npm test              # 全部单元测试（成本公式 / 渲染冒烟 / 管线回查·merge·报告）
+npm run typecheck     # 前端 + 管线双 tsconfig 类型检查
+npm run pipeline:dry  # 本地试跑数据管线（打印变更报告，不写文件；需要 Anthropic 凭证）
+npm run pipeline      # 真跑管线：更新 models.json + 生成 reports/YYYY-MM-DD.md
+```
+
+## 功能
+
+| 区块 | 说明 |
+|---|---|
+| **模型对照表** | 收录 OpenAI / Anthropic / Google / DeepSeek / Qwen / Kimi / 豆包 / OpenRouter 共 26 个模型。可搜索、按厂商筛选、按能力筛选（图片 / 工具调用 / 免费 / 仅官方核实价），点表头排序，点行展开备注与数据来源 |
+| **成本计算器** | 输入「每次请求输入 tokens、输出 tokens、请求次数」，按公式 `(输入×单价 + 输出×单价) ÷ 1M × 次数` 估算总花费，横条图对比。人民币计价模型按可调汇率换算 |
+| **预设模式** | 学生省钱 / 代码开发 / 长文档分析，三套排序策略，每个模型附入选理由 |
+| **场景推荐** | 代码 / 长文档 / 低成本 / 中文 / 图片理解 / Agent 六个场景的 Top 5 推荐 |
+
+## 数据诚实性原则
+
+- **查不到就标 unknown**：`models.json` 中价格、上下文、能力字段为 `null` 表示未能核实，UI 显示为 *unknown*，成本计算器直接跳过（列在"无法计算"里），排序时永远排最后。**绝不编造数据。**
+- **`verified` 字段**：`true` 表示价格来自官方定价页（OpenAI / Google / DeepSeek / Anthropic 已核实）；`false` 表示来自第三方汇总（Qwen / Kimi / 豆包 / OpenRouter），表格中带"未核实"标记，每条数据的 `source` 字段记录出处。
+- **能力评分（scores）是编辑主观判断**（0–5），基于公开基准与社区口碑，不是官方数据 —— 这是推荐功能的输入，欢迎按你的实测修改。
+- 人民币计价模型（豆包）保留原币价格，换算汇率默认 7.2，可在计算器中调整。
+
+## 文件结构
+
+```
+ai_model_decision_dash/
+├── index.html
+├── package.json
+├── vite.config.ts / tsconfig.json / tsconfig.pipeline.json
+├── tailwind.config.js / postcss.config.js
+├── .github/workflows/
+│   ├── update-data.yml          # 每周数据管线（异常自动转 PR）
+│   └── deploy.yml               # GitHub Pages 部署 + 密钥泄漏自检
+├── pipeline/                    # 数据管线（不进前端 bundle）
+│   ├── index.ts                 # 编排入口（--dry-run 支持）
+│   ├── sources.ts               # 数据源清单
+│   ├── fetch.ts                 # 抓取 + HTML→文本 + 快照
+│   ├── parse.ts                 # Claude 结构化解析（LLM 仅解析）+ OpenRouter API
+│   ├── verify.ts                # ★ 数字回查（LLM 编造即拦截）
+│   ├── merge.ts                 # curated × 抓取结果 × 上一版 合并
+│   ├── report.ts                # 变更报告 + 异常检测
+│   └── *.test.ts                # 管线单元测试（fixture，不打 API）
+├── reports/                     # 每次运行的变更报告（入库）
+├── src/
+│   ├── main.tsx                 # 入口
+│   ├── App.tsx                  # 页面布局 + 筛选状态
+│   ├── App.test.tsx             # 渲染冒烟测试
+│   ├── index.css                # Tailwind + 设计 token
+│   ├── types.ts                 # 类型（从 Zod schema z.infer 推导）
+│   ├── data/
+│   │   ├── schema.ts            # ★ Zod schema（前端/管线共用的单一事实来源）
+│   │   ├── curated.json         # ★ 人工维护：评分/标签/备注/别名/兜底价
+│   │   └── models.json          # 管线产物：事实字段 + 源状态
+│   ├── lib/
+│   │   ├── cost.ts              # 成本计算（含 CNY→USD 换算）
+│   │   ├── cost.test.ts         # 成本公式单元测试（可手算验证）
+│   │   └── recommend.ts         # 场景评分 + 三个预设模式
+│   └── components/
+│       ├── ModelTable.tsx       # 可排序表格
+│       ├── FilterBar.tsx        # 搜索与筛选
+│       ├── CostCalculator.tsx   # 成本计算器
+│       ├── Presets.tsx          # 预设模式
+│       ├── Scenarios.tsx        # 场景推荐
+│       └── ui.tsx               # 通用小组件
+└── README.md
+```
+
+## 成本计算逻辑（可验证）
+
+```
+单次成本(USD) = (输入tokens × 输入单价 + 输出tokens × 输出单价) ÷ 1,000,000
+总成本       = 单次成本 × 请求次数
+人民币模型   : 单价先除以汇率（默认 7.2，可调）
+价格 unknown : 返回 null，不参与计算
+```
+
+手算示例（见 `src/lib/cost.test.ts`）：Claude Sonnet 5（$3 / $15），每次 10K 输入 + 2K 输出，共 100 次：
+`(10000×3 + 2000×15) ÷ 1e6 = $0.06/次 → ×100 = $6.00` ✓
+
+未计入：提示词缓存折扣、批量 API 折扣（−50%）、分级计价加价（如 Gemini >200K），实际账单可能不同。
+
+## 推荐规则
+
+所有规则在 `src/lib/recommend.ts`，纯函数，改完即生效：
+
+- **综合单价** = (输入价×3 + 输出价) ÷ 4（近似 3:1 输入输出比）
+- **便宜分** = 综合单价的对数映射到 0–5（$0 → 5 分，≥$20/1M → 0 分）
+- **上下文分** = 窗口大小的对数映射到 0–5（16K → 0，1M → 5）
+
+| 模式 | 公式 | 排除规则 |
+|---|---|---|
+| 学生省钱 | 便宜分×3 + 对话 + 中文 | 价格 unknown 不参与（无法保证省钱） |
+| 代码开发 | 代码×3 + Agent×2 + 工具调用加分 − 价格惩罚 | 明确不支持工具调用的不参与 |
+| 长文档分析 | 长文档×2.5 + 上下文分×1.5 − 输入价惩罚 | 上下文 unknown 的降权不排除 |
+| 图片理解（场景） | 仅保留 `vision === true` 的模型 | vision unknown 的不推荐 |
+
+## 自动数据管线
+
+```
+GitHub Actions 每周一 02:00 UTC（或手动 workflow_dispatch）
+  1. fetch    抓官方定价页原文（快照存 Actions artifact 供审计）
+  2. parse    Claude API 把页面文本转结构化 JSON —— LLM 只做解析
+  3. verify   数字回查：LLM 输出的每个数字必须在源文本中找到，否则置 unknown 并记录
+  4. merge    curated.json（人工字段）× 抓取结果（事实字段）→ src/data/models.json
+  5. validate Zod 全量校验（src/data/schema.ts），不合法绝不写盘
+  6. report   与旧数据 diff → reports/YYYY-MM-DD.md
+  7. commit   正常 → 直接 push main；异常（价格波动 >±50% / 回查拦截率 >30%）→ 开 PR 人工审
+push main → deploy.yml → 构建 + 密钥泄漏自检 → GitHub Pages
+```
+
+### LLM 不是事实来源 —— 四层防线
+
+1. **Prompt 限定**（`pipeline/parse.ts`）：只许照抄页面数值，页面没写一律 null，禁止用模型自身知识。
+2. **数字逐字回查**（`pipeline/verify.ts`）：提取的每个数字必须能在源页面文本中找到（支持每 1K→1M 换算、200K/1M/二进制 K 等形式），查不到即置 unknown 并写进报告的"回查拦截"表。
+3. **Zod schema 校验**（`src/data/schema.ts`）：产物不合法直接中止（exit 1），不写盘。
+4. **异常阈值转人工**：价格波动超 ±50% 或拦截率超 30% 时 exit 2，CI 不再直接 push，改开带完整变更报告的 PR。
+
+OpenRouter 走它的公开 JSON API（`/api/v1/models`），完全不经过 LLM。Qwen/豆包官方页有登录墙/JS 渲染，不自动抓，沿用人工值并在报告标 `manual`。
+
+### API Key 安全
+
+- `ANTHROPIC_API_KEY` **只**存 GitHub repo Settings → Secrets and variables → Actions，仅 `update-data.yml` 的管线步骤可见。
+- 管线代码在 `pipeline/`，不被 `src/` 引用，不进 Vite bundle；前端只 import 静态 `models.json`。
+- 部署 workflow 构建后执行 `grep -rE "sk-ant-|ANTHROPIC_API_KEY" dist/`，命中即中止部署（兜底自检）。
+- 本地跑管线：`ant auth login` 后 SDK 自动取凭证，或临时 `export ANTHROPIC_API_KEY=...`。
+
+### 首次启用（仓库设置）
+
+1. 在 repo Secrets 中添加 `ANTHROPIC_API_KEY`。
+2. Settings → Pages → Source 选 "GitHub Actions"。
+3. Actions 页手动触发一次 "Update model data" 验证管线，再看 Pages 部署结果。
+
+## 如何维护数据
+
+数据分两层，**人工只维护 `curated.json`，`models.json` 是管线产物**：
+
+| 文件 | 谁维护 | 内容 |
+|---|---|---|
+| `src/data/curated.json` | 人工 | id / 名称 / 厂商 / 币种 / **能力评分** / 标签 / 备注 / vision·toolUse 能力位 / `aliases`（官方页名称变体，供匹配）/ `fallback`（抓不到时的兜底价） |
+| `src/data/models.json` | 管线 | 事实字段（价格 / 上下文 / maxOutput / 缓存价 / source / verified）+ `meta.pipeline` 源状态 |
+
+- **加新模型**：管线报告的"候选新模型"列出官方页有但本库没有的条目 → 在 `curated.json` 加一条（评分需人工评定，这是编辑判断，管线永不代劳），下次运行自动填充价格。
+- **改评分/备注**：直接改 `curated.json`，下次管线运行生效；急的话本地跑 `npm run pipeline`。
+- **豆包/Qwen 价格变了**：改 `curated.json` 对应条目的 `fallback`（这两家无自动源）。
+- 改完跑 `npm test`。
+- 官方定价页速查：
+   - OpenAI: <https://developers.openai.com/api/docs/pricing>
+   - Anthropic: <https://platform.claude.com/docs/en/about-claude/pricing>
+   - Google: <https://ai.google.dev/gemini-api/docs/pricing>
+   - DeepSeek: <https://api-docs.deepseek.com/quick_start/pricing>
+   - 阿里云百炼: <https://www.alibabacloud.com/help/en/model-studio/model-pricing>
+   - Moonshot: <https://platform.moonshot.ai>
+   - 火山引擎: <https://www.volcengine.com/docs/82379/1544106>
+   - OpenRouter: <https://openrouter.ai/models>
+
+## 未来扩展建议
+
+- **候选模型半自动入库**：管线报告里的候选新模型，可再加一步 LLM 生成 curated 条目草稿（评分留空）供人工补全。
+- **Qwen/豆包自动化**：用 Playwright 无头浏览器抓 JS 渲染的控制台页，或接阿里云/火山的计费 API。
+- **缓存/批量成本模型**：计算器加"缓存命中率"滑块与"批量 API"开关，利用 `cachedInputPrice` 字段。
+- **用量导入**：支持粘贴各平台账单 CSV，反推 token 用量再估算迁移成本。
+- **分级计价**：为 Gemini / Qwen 这类按输入长度分档的模型建 `priceTiers` 数组，按输入 token 自动选档。
+- **自定义权重**：把预设模式的权重做成滑块，导出/分享自己的选型策略。
+- **暗色模式**：设计 token 已集中在 `tailwind.config.js`，加一套暗色变量即可。
+
+## 数据快照
+
+- 数据更新：**2026-07-07**
+- 价格官方核实：OpenAI、Anthropic、Google、DeepSeek（共 18 个模型 `verified: true`）
+- 第三方来源（标"未核实"）：Qwen、Kimi、豆包、OpenRouter
+- 价格随时可能调整，下单前请以各厂商官方定价页为准

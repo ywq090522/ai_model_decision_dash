@@ -6,6 +6,7 @@ import { ModelTable } from "./components/ModelTable";
 import { CostCalculator } from "./components/CostCalculator";
 import { Scenarios } from "./components/Scenarios";
 import { Presets } from "./components/Presets";
+import { GatewayModels } from "./components/GatewayModels";
 import { Section } from "./components/ui";
 
 const data = rawData as ModelData;
@@ -122,6 +123,16 @@ export default function App() {
         desc="选择你的使用场景，查看 Top 5 推荐与理由。"
       >
         <Scenarios models={data.models} cnyPerUsd={cnyPerUsd} />
+      </Section>
+
+      {/* 多模型网关 */}
+      <Section
+        id="gateway"
+        eyebrow="05 · Gateway"
+        title="多模型网关"
+        desc="用同一份 Anthropic Messages 请求格式调用下列模型，按 model 自动路由到各家的 Anthropic 兼容端点。本表由 registry 生成；网关在本地运行，API Key 永不进入前端。"
+      >
+        <GatewayModels />
       </Section>
 
       <footer className="mt-12 border-t border-line pt-4 text-[11px] leading-relaxed text-muted">

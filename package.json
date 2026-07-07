@@ -10,7 +10,8 @@
     "test": "vitest run",
     "typecheck": "tsc -b && tsc -p tsconfig.pipeline.json",
     "pipeline": "tsx pipeline/index.ts",
-    "pipeline:dry": "tsx pipeline/index.ts --dry-run"
+    "pipeline:dry": "tsx pipeline/index.ts --dry-run",
+    "gateway": "tsx gateway/server.ts"
   },
   "dependencies": {
     "react": "^18.3.1",

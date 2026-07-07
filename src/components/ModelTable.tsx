@@ -2,6 +2,10 @@ import { useMemo, useState } from "react";
 import type { ModelInfo } from "../types";
 import { formatPrice, formatTokens, priceInUsd } from "../lib/cost";
 import { ScoreCell, TriState, UnknownMark } from "./ui";
+import registry from "../data/registry.json";
+
+/** 已注册到多模型网关（可经本地网关以 Anthropic 格式调用）的模型 id */
+const GATEWAY_IDS = new Set(registry.models.map((m) => m.id));
 
 type SortKey =
   | "name"
@@ -145,6 +149,14 @@ function ModelRow({
                 title="价格未从官方定价页核实"
               >
                 未核实
+              </span>
+            )}
+            {GATEWAY_IDS.has(m.id) && (
+              <span
+                className="rounded bg-accent-wash px-1 py-0.5 text-[10px] font-medium text-accent"
+                title="已注册到本地多模型网关，可用 Anthropic Messages 格式经 npm run gateway 调用（详见 05 · Gateway）"
+              >
+                网关可调
               </span>
             )}
           </div>

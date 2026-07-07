@@ -1,6 +1,7 @@
 node_modules
 dist
 pipeline/.snapshots/
+.env
 *.tsbuildinfo
 *.local
 .DS_Store

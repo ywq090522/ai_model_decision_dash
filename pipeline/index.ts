@@ -14,7 +14,7 @@ import { CuratedDataSchema, ModelDataSchema } from "../src/data/schema";
 import type { ModelData } from "../src/types";
 import { fetchText, htmlToText, saveSnapshot } from "./fetch";
 import { MANUAL_PROVIDERS, SOURCES } from "./sources";
-import { parseOpenRouter, parseWithClaude } from "./parse";
+import { parseOpenRouter, parseWithLLM } from "./parse";
 import { verifyExtraction } from "./verify";
 import { mergeData, type SourceResult } from "./merge";
 import { buildReport } from "./report";
@@ -34,7 +34,7 @@ async function runSource(def: (typeof SOURCES)[number]): Promise<SourceResult> {
     }
     const text = htmlToText(raw);
     saveSnapshot(def.key, text);
-    const extracted = await parseWithClaude(text);
+    const extracted = await parseWithLLM(text);
     const { models, flags } = verifyExtraction(text, extracted);
     return { def, status: "ok", fetchedAt, extracted: models, flags };
   } catch (e) {

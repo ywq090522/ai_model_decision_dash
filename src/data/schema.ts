@@ -102,6 +102,42 @@ export const CuratedDataSchema = z.object({
   models: z.array(CuratedModelSchema).min(1),
 });
 
+/**
+ * 网关 registry：provider 配置层 + 模型路由表。
+ * 前端只读元数据展示；网关/管线据此路由请求。
+ * apiKeyEnv 只存环境变量名，key 值永远不进任何 JSON / 前端代码。
+ */
+export const GatewayProviderSchema = z.object({
+  key: z.string().min(1),
+  label: z.string().min(1),
+  /** Anthropic 兼容端点的根地址（不含 messagesPath），必须 https */
+  baseUrl: z.string().regex(/^https:\/\/[^\s]+[^/]$/, "https 且不以 / 结尾"),
+  /** Messages 端点路径，通常为 /v1/messages */
+  messagesPath: z.string().startsWith("/"),
+  /** 鉴权方式：x-api-key 头 或 Authorization: Bearer */
+  auth: z.enum(["x-api-key", "bearer"]),
+  /** 读取 key 的环境变量名（仅名字） */
+  apiKeyEnv: z.string().regex(/^[A-Z][A-Z0-9_]*$/),
+  /** 是否支持 Anthropic 结构化输出（output_config.format）；管线据此选解析路径 */
+  structuredOutput: z.boolean(),
+  notes: z.string(),
+});
+
+export const RegistryModelSchema = z.object({
+  /** 网关对外的模型 id；与 models.json 的 id 对齐以便前端 join */
+  id: z.string().min(1),
+  /** 对应 GatewayProviderSchema.key */
+  provider: z.string().min(1),
+  /** 转发给上游时替换成的真实模型 id */
+  upstreamModel: z.string().min(1),
+  notes: z.string().optional(),
+});
+
+export const RegistrySchema = z.object({
+  providers: z.array(GatewayProviderSchema).min(1),
+  models: z.array(RegistryModelSchema).min(1),
+});
+
 /** LLM 结构化输出 schema：单个来源页上提取到的模型定价条目 */
 export const ExtractedModelSchema = z.object({
   modelId: z

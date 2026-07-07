@@ -6,6 +6,7 @@
 - 生产构建：`npm run build`
 - 自动部署：push 到 `main` 后由 `.github/workflows/deploy.yml` 发布到 GitHub Pages
 - 自动数据更新：由 `.github/workflows/update-data.yml` 每周运行，需要配置 `ANTHROPIC_API_KEY`
+- 多模型网关：`npm run gateway` **只在本地/自有服务器运行**，不随 Pages 部署（Pages 只有静态文件）；线上页面的「05 · Gateway」区块仅展示 registry 元数据
 
 ## 1. 创建 GitHub 仓库
 
@@ -71,7 +72,7 @@ GitHub Actions
 1. 安装依赖
 2. 运行测试
 3. 构建静态文件
-4. 检查构建产物中没有 API Key
+4. 检查构建产物中没有 API Key 值（`sk-` 形态的长串；环境变量名会合法出现在产物里，用于展示网关 registry）
 5. 发布到 GitHub Pages
 
 部署完成后，访问地址通常是：
@@ -98,6 +99,8 @@ Value: 你的 Anthropic API Key
 ```
 
 这个 Key 只会在数据更新 workflow 中使用，不会进入前端 bundle。
+
+可选：如果想把管线的解析模型换成其它 provider（在 workflow env 中设置 `PARSER_MODEL` 为 registry 里的模型 id，如 `deepseek-v4-pro`），需要再添加对应 provider 的 Secret（`DEEPSEEK_API_KEY` / `MOONSHOT_API_KEY` / `ZHIPU_API_KEY`），并在 `update-data.yml` 的 env 里传入。默认无需任何额外配置。
 
 ## 5. 手动触发部署或更新
 
@@ -167,6 +170,13 @@ npm run pipeline:dry
 npm run pipeline
 ```
 
+启动多模型网关（key 先复制 `.env.example` 为 `.env` 并填入，`.env` 已 gitignore）：
+
+```bash
+cp .env.example .env
+npm run gateway     # http://localhost:8788
+```
+
 ## 7. 常见问题
 
 ### 页面打开后样式或 JS 加载失败
@@ -205,4 +215,8 @@ ANTHROPIC_API_KEY
 可以不配置 `ANTHROPIC_API_KEY`。
 
 网页部署不依赖这个 Key，只有 `Update model data` workflow 需要它。
+
+### 线上页面的「多模型网关」为什么调不通
+
+网关是本地 Node 服务，GitHub Pages 不能运行它。线上页面只展示 registry 元数据；要真正调用，需在自己的机器上 `npm run gateway`（key 写本地 `.env`，永远不要提交或放进前端）。
 

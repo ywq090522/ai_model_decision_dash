@@ -34,6 +34,9 @@ jobs:
 
       - name: Run data pipeline
         id: pipeline
+        # 解析模型经网关路由层可配置：设 PARSER_MODEL 为 registry 内任意模型
+        # （如 deepseek-v4-pro / glm-5.1），并把对应 provider 的 key 加为 Secret
+        # （DEEPSEEK_API_KEY / MOONSHOT_API_KEY / ZHIPU_API_KEY）后在此传入。
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |

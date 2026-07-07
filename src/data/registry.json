@@ -1,0 +1,62 @@
+{
+  "providers": [
+    {
+      "key": "anthropic",
+      "label": "Anthropic 官方",
+      "baseUrl": "https://api.anthropic.com",
+      "messagesPath": "/v1/messages",
+      "auth": "x-api-key",
+      "apiKeyEnv": "ANTHROPIC_API_KEY",
+      "structuredOutput": true,
+      "notes": "官方 API；唯一支持结构化输出（output_config.format）的 provider"
+    },
+    {
+      "key": "deepseek",
+      "label": "DeepSeek（Anthropic 兼容）",
+      "baseUrl": "https://api.deepseek.com/anthropic",
+      "messagesPath": "/v1/messages",
+      "auth": "x-api-key",
+      "apiKeyEnv": "DEEPSEEK_API_KEY",
+      "structuredOutput": false,
+      "notes": "官方 Anthropic 兼容端点；thinking 支持但忽略 budget_tokens（2026-07 官方文档核实）"
+    },
+    {
+      "key": "moonshot",
+      "label": "Moonshot Kimi（Anthropic 兼容）",
+      "baseUrl": "https://api.moonshot.cn/anthropic",
+      "messagesPath": "/v1/messages",
+      "auth": "bearer",
+      "apiKeyEnv": "MOONSHOT_API_KEY",
+      "structuredOutput": false,
+      "notes": "国内端点；海外可改 api.moonshot.ai。官方文档以 ANTHROPIC_AUTH_TOKEN（Bearer）鉴权（2026-07 核实）"
+    },
+    {
+      "key": "zhipu",
+      "label": "智谱 GLM（Anthropic 兼容）",
+      "baseUrl": "https://open.bigmodel.cn/api/anthropic",
+      "messagesPath": "/v1/messages",
+      "auth": "bearer",
+      "apiKeyEnv": "ZHIPU_API_KEY",
+      "structuredOutput": false,
+      "notes": "官方 Claude API 兼容层，Bearer 鉴权（2026-07 官方文档核实）"
+    }
+  ],
+  "models": [
+    { "id": "claude-fable-5", "provider": "anthropic", "upstreamModel": "claude-fable-5" },
+    { "id": "claude-opus-4-8", "provider": "anthropic", "upstreamModel": "claude-opus-4-8" },
+    { "id": "claude-sonnet-5", "provider": "anthropic", "upstreamModel": "claude-sonnet-5" },
+    { "id": "claude-sonnet-4-6", "provider": "anthropic", "upstreamModel": "claude-sonnet-4-6" },
+    { "id": "claude-haiku-4-5", "provider": "anthropic", "upstreamModel": "claude-haiku-4-5" },
+    { "id": "deepseek-v4-pro", "provider": "deepseek", "upstreamModel": "deepseek-v4-pro" },
+    { "id": "deepseek-v4-flash", "provider": "deepseek", "upstreamModel": "deepseek-v4-flash" },
+    { "id": "kimi-k2.6", "provider": "moonshot", "upstreamModel": "kimi-k2.6" },
+    {
+      "id": "kimi-k2.5",
+      "provider": "moonshot",
+      "upstreamModel": "kimi-k2.5",
+      "notes": "官方已建议升级到 kimi-k2.6"
+    },
+    { "id": "glm-5.1", "provider": "zhipu", "upstreamModel": "glm-5.1" },
+    { "id": "glm-4.7", "provider": "zhipu", "upstreamModel": "glm-4.7" }
+  ]
+}

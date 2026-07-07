@@ -13,5 +13,5 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true
   },
-  "include": ["pipeline", "src/data/schema.ts", "src/types.ts"]
+  "include": ["pipeline", "gateway", "src/data/schema.ts", "src/types.ts"]
 }

@@ -90,16 +90,19 @@ export function mergeData(
     matchedExtractedIds.add(`${src.def.key}:${hit.modelId}`);
 
     const updated: string[] = [];
+    let confirmedByCurrentSource = false;
     for (const f of FACT_FIELDS) {
       const v = hit[f];
+      if (v !== null) confirmedByCurrentSource = true;
       if (v !== null && v !== base[f]) {
         (base as Record<string, unknown>)[f] = v;
         updated.push(f);
       }
     }
-    // 只要在源上匹配到了条目，来源与核实状态就以本次抓取为准
-    base.source = `${src.def.label}（${runDate} 自动抓取）`;
-    base.verified = src.def.verified;
+    if (confirmedByCurrentSource) {
+      base.source = `${src.def.label}（${runDate} 自动抓取）`;
+      base.verified = src.def.verified;
+    }
     if (updated.length > 0) fieldUpdates.set(c.id, updated);
     return base;
   });

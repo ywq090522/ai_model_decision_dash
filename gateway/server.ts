@@ -1,4 +1,5 @@
 import http from "node:http";
+import { timingSafeEqual } from "node:crypto";
 import { Readable } from "node:stream";
 import type { Registry } from "../src/types";
 import { loadRegistry, resolveModel } from "./registry";
@@ -16,10 +17,41 @@ import { buildUpstreamRequest, errorBody, GatewayError } from "./upstream";
  */
 
 const MAX_BODY_BYTES = 20 * 1024 * 1024;
+export const DEFAULT_GATEWAY_HOST = "127.0.0.1";
+
+export function resolveGatewayHost(env: NodeJS.ProcessEnv = process.env): string {
+  return env.GATEWAY_HOST?.trim() || DEFAULT_GATEWAY_HOST;
+}
+
+function configuredAuthToken(env: NodeJS.ProcessEnv): string | null {
+  const token = env.GATEWAY_AUTH_TOKEN?.trim();
+  return token ? token : null;
+}
 
 function sendError(res: http.ServerResponse, err: GatewayError): void {
   res.writeHead(err.status, { "content-type": "application/json" });
   res.end(errorBody(err));
+}
+
+function bearerTokenMatches(header: string | undefined, token: string): boolean {
+  const prefix = "Bearer ";
+  if (!header?.startsWith(prefix)) return false;
+  const supplied = Buffer.from(header.slice(prefix.length));
+  const expected = Buffer.from(token);
+  return supplied.length === expected.length && timingSafeEqual(supplied, expected);
+}
+
+function requireInboundAuth(
+  req: http.IncomingMessage,
+  path: string,
+  env: NodeJS.ProcessEnv,
+): void {
+  if (path === "/healthz") return;
+  const token = configuredAuthToken(env);
+  if (!token) return;
+  if (!bearerTokenMatches(req.headers.authorization, token)) {
+    throw new GatewayError(401, "authentication_error", "缺少或无效的入站鉴权令牌");
+  }
 }
 
 function readBody(req: http.IncomingMessage): Promise<string> {
@@ -105,17 +137,27 @@ function handleModels(res: http.ServerResponse, registry: Registry): void {
   res.end(JSON.stringify({ data, has_more: false }));
 }
 
+export interface GatewayOptions {
+  env?: NodeJS.ProcessEnv;
+}
+
 /** registry 参数仅供测试注入 mock 上游；生产路径用 registry.json */
-export function createGateway(registry: Registry = loadRegistry()): http.Server {
+export function createGateway(
+  registry: Registry = loadRegistry(),
+  options: GatewayOptions = {},
+): http.Server {
+  const env = options.env ?? process.env;
   return http.createServer((req, res) => {
     const url = req.url ?? "";
+    const path = url.split("?", 1)[0];
     void (async () => {
       try {
-        if (req.method === "POST" && url === "/v1/messages") {
+        requireInboundAuth(req, path, env);
+        if (req.method === "POST" && path === "/v1/messages") {
           await handleMessages(req, res, registry);
-        } else if (req.method === "GET" && url === "/v1/models") {
+        } else if (req.method === "GET" && path === "/v1/models") {
           handleModels(res, registry);
-        } else if (req.method === "GET" && url === "/healthz") {
+        } else if (req.method === "GET" && path === "/healthz") {
           res.writeHead(200, { "content-type": "application/json" });
           res.end(JSON.stringify({ status: "ok" }));
         } else {
@@ -147,9 +189,15 @@ if (isMain) {
     // 没有 .env 也可运行（key 可能已 export 在环境中）
   }
   const port = Number(process.env.GATEWAY_PORT ?? 8788);
-  createGateway().listen(port, () => {
+  const host = resolveGatewayHost();
+  createGateway().listen(port, host, () => {
     const registry = loadRegistry();
-    console.log(`gateway 已启动 http://localhost:${port}`);
+    console.log(`gateway 已启动 http://${host}:${port}`);
+    if (configuredAuthToken(process.env)) {
+      console.log("  入站鉴权已启用");
+    } else {
+      console.warn("  未启用入站鉴权，仅建议本地使用");
+    }
     console.log(`  POST /v1/messages（Anthropic Messages 格式，按 model 路由）`);
     console.log(`  GET  /v1/models（${registry.models.length} 个模型 / ${registry.providers.length} 个 provider）`);
     for (const p of registry.providers) {

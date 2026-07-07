@@ -163,6 +163,92 @@ describe("mergeData", () => {
     expect(m.inputPrice).toBe(2.5);
     expect(m.outputPrice).toBe(10.0);
     expect(m.contextWindow).toBe(400_000);
+    expect(m.source).toContain("OpenAI 官方定价页");
+    expect(m.verified).toBe(true);
+  });
+
+  it("命中模型但所有事实字段都是 null 时，不更新 source/verified", () => {
+    const previous: ModelData = {
+      meta: {
+        updatedAt: "2026-06-01",
+        priceUnit: "u",
+        defaultCnyPerUsd: 7.2,
+        cnyRateNote: "n",
+        scoreNote: "n",
+        unknownNote: "n",
+      },
+      models: [
+        {
+          id: "gpt-test",
+          name: "GPT Test",
+          provider: "OpenAI",
+          currency: "USD",
+          inputPrice: 2.0,
+          outputPrice: 10.0,
+          cachedInputPrice: 0.2,
+          contextWindow: 400_000,
+          maxOutput: 128_000,
+          vision: true,
+          toolUse: true,
+          scores: { coding: 3, longDoc: 3, chat: 3, agent: 3, chinese: 3 },
+          tags: [],
+          notes: "",
+          source: "旧源",
+          verified: false,
+        },
+      ],
+    };
+    const out = mergeData(
+      curated,
+      previous,
+      [
+        okResult([
+          {
+            modelId: "gpt-test",
+            inputPrice: null,
+            outputPrice: null,
+            cachedInputPrice: null,
+            contextWindow: null,
+            maxOutput: null,
+          },
+        ]),
+      ],
+      [],
+      "2026-07-07",
+    );
+    const m = out.data.models.find((x) => x.id === "gpt-test")!;
+    expect(m.inputPrice).toBe(2.0);
+    expect(m.outputPrice).toBe(10.0);
+    expect(m.source).toBe("旧源");
+    expect(m.verified).toBe(false);
+    expect(out.fieldUpdates.has("gpt-test")).toBe(false);
+  });
+
+  it("部分字段非 null 时，只更新对应字段，并更新 source/verified", () => {
+    const out = mergeData(
+      curated,
+      null,
+      [
+        okResult([
+          {
+            modelId: "gpt-test",
+            inputPrice: null,
+            outputPrice: 12.0,
+            cachedInputPrice: null,
+            contextWindow: null,
+            maxOutput: null,
+          },
+        ]),
+      ],
+      [],
+      "2026-07-07",
+    );
+    const m = out.data.models.find((x) => x.id === "gpt-test")!;
+    expect(m.inputPrice).toBe(2.0);
+    expect(m.outputPrice).toBe(12.0);
+    expect(m.source).toContain("OpenAI 官方定价页");
+    expect(m.verified).toBe(true);
+    expect(out.fieldUpdates.get("gpt-test")).toEqual(["outputPrice"]);
   });
 
   it("源失败 → 保留旧值并标 stale；manual provider 标 manual", () => {

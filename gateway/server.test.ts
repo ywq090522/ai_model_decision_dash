@@ -2,7 +2,7 @@ import http from "node:http";
 import type { AddressInfo } from "node:net";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Registry } from "../src/types";
-import { createGateway } from "./server";
+import { createGateway, resolveGatewayHost } from "./server";
 
 /** mock 上游：记录收到的请求，按 body.stream 返回 JSON 或 SSE 分块 */
 let upstreamSeen: { headers: http.IncomingHttpHeaders; body: Record<string, unknown> }[] = [];
@@ -37,6 +37,7 @@ function createMockUpstream(): http.Server {
 
 let upstream: http.Server;
 let gateway: http.Server;
+let registry: Registry;
 let gwBase = "";
 
 beforeAll(async () => {
@@ -44,7 +45,7 @@ beforeAll(async () => {
   await new Promise<void>((r) => upstream.listen(0, "127.0.0.1", r));
   const upPort = (upstream.address() as AddressInfo).port;
 
-  const registry: Registry = {
+  registry = {
     providers: [
       {
         key: "mock-x",
@@ -105,7 +106,71 @@ function post(body: unknown, headers: Record<string, string> = {}) {
   });
 }
 
+async function withGateway(
+  options: Parameters<typeof createGateway>[1],
+  fn: (base: string) => Promise<void>,
+): Promise<void> {
+  const server = createGateway(registry, options);
+  await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
+  const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  try {
+    await fn(base);
+  } finally {
+    await new Promise<void>((r) => server.close(() => r()));
+  }
+}
+
 describe("gateway server", () => {
+  it("默认监听 host 为 127.0.0.1，且可用 GATEWAY_HOST 覆盖", () => {
+    expect(resolveGatewayHost({} as NodeJS.ProcessEnv)).toBe("127.0.0.1");
+    expect(resolveGatewayHost({ GATEWAY_HOST: "0.0.0.0" } as NodeJS.ProcessEnv)).toBe(
+      "0.0.0.0",
+    );
+    expect(resolveGatewayHost({ GATEWAY_HOST: "" } as NodeJS.ProcessEnv)).toBe("127.0.0.1");
+  });
+
+  it("GATEWAY_AUTH_TOKEN：/healthz 放行，其他路由缺 token 返回 Anthropic 风格 401", async () => {
+    await withGateway(
+      { env: { GATEWAY_AUTH_TOKEN: "inbound-secret" } as NodeJS.ProcessEnv },
+      async (base) => {
+        const health = await fetch(`${base}/healthz`);
+        expect(health.status).toBe(200);
+
+        const res = await fetch(`${base}/v1/models`);
+        expect(res.status).toBe(401);
+        const text = await res.text();
+        const json = JSON.parse(text) as {
+          type: string;
+          error: { type: string; message: string };
+        };
+        expect(json.type).toBe("error");
+        expect(json.error.type).toBe("authentication_error");
+        expect(text).not.toContain("inbound-secret");
+      },
+    );
+  });
+
+  it("GATEWAY_AUTH_TOKEN：正确 Bearer token 放行，错误 token 拒绝且不泄漏 token", async () => {
+    await withGateway(
+      { env: { GATEWAY_AUTH_TOKEN: "inbound-secret" } as NodeJS.ProcessEnv },
+      async (base) => {
+        const ok = await fetch(`${base}/v1/models`, {
+          headers: { authorization: "Bearer inbound-secret" },
+        });
+        expect(ok.status).toBe(200);
+
+        const bad = await fetch(`${base}/v1/models`, {
+          headers: { authorization: "Bearer wrong-secret" },
+        });
+        expect(bad.status).toBe(401);
+        const text = await bad.text();
+        expect(text).toContain("authentication_error");
+        expect(text).not.toContain("inbound-secret");
+        expect(text).not.toContain("wrong-secret");
+      },
+    );
+  });
+
   it("未知 model → 404 Anthropic 风格错误", async () => {
     const res = await post({ model: "no-such", messages: [] });
     expect(res.status).toBe(404);

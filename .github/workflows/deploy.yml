@@ -35,10 +35,13 @@ jobs:
           BASE_PATH: /${{ github.event.repository.name }}/
         run: npm run build
 
-      # 只匹配 key 的“值”形态（sk- 前缀等）。环境变量名（如 ANTHROPIC_API_KEY）
-      # 会合法出现在产物里 —— 前端展示 registry 的 provider 配置需要它们。
+      # 前端不应包含任何后端 provider 配置、环境变量名或密钥值。
       - name: Assert no secrets in bundle
         run: |
+          if grep -rE "ANTHROPIC_API_KEY|DEEPSEEK_API_KEY|MOONSHOT_API_KEY|ZHIPU_API_KEY|api\.anthropic\.com|api\.deepseek\.com/anthropic|api\.moonshot\.cn/anthropic|open\.bigmodel\.cn/api/anthropic" dist/; then
+            echo "::error::构建产物包含网关 provider 配置或环境变量名，中止部署"
+            exit 1
+          fi
           if grep -rE "sk-ant-[A-Za-z0-9_-]{8,}|sk-[A-Za-z0-9]{24,}" dist/; then
             echo "::error::构建产物疑似包含密钥值，中止部署"
             exit 1

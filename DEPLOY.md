@@ -6,7 +6,7 @@
 - 生产构建：`npm run build`
 - 自动部署：push 到 `main` 后由 `.github/workflows/deploy.yml` 发布到 GitHub Pages
 - 自动数据更新：由 `.github/workflows/update-data.yml` 每周运行，需要配置 `ANTHROPIC_API_KEY`
-- 多模型网关：`npm run gateway` **只在本地/自有服务器运行**，不随 Pages 部署（Pages 只有静态文件）；线上页面的「05 · Gateway」区块仅展示 registry 元数据
+- 多模型网关：`npm run gateway` **只在本地/自有服务器运行**，不随 Pages 部署（Pages 只有静态文件）；线上页面不展示网关配置，网关用法见 README/DEPLOY
 
 ## 1. 创建 GitHub 仓库
 
@@ -72,7 +72,7 @@ GitHub Actions
 1. 安装依赖
 2. 运行测试
 3. 构建静态文件
-4. 检查构建产物中没有 API Key 值（`sk-` 形态的长串；环境变量名会合法出现在产物里，用于展示网关 registry）
+4. 检查构建产物中没有 API Key 值（`sk-` 形态的长串）
 5. 发布到 GitHub Pages
 
 部署完成后，访问地址通常是：
@@ -216,7 +216,6 @@ ANTHROPIC_API_KEY
 
 网页部署不依赖这个 Key，只有 `Update model data` workflow 需要它。
 
-### 线上页面的「多模型网关」为什么调不通
+### 线上页面为什么没有多模型网关配置
 
-网关是本地 Node 服务，GitHub Pages 不能运行它。线上页面只展示 registry 元数据；要真正调用，需在自己的机器上 `npm run gateway`（key 写本地 `.env`，永远不要提交或放进前端）。
-
+网关是本地 Node 服务，GitHub Pages 不能运行它。线上页面不展示 provider 端点、鉴权方式、环境变量名或 curl 示例；要真正调用，需在自己的机器上 `npm run gateway`（key 写本地 `.env`，永远不要提交或放进前端）。

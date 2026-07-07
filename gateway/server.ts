@@ -3,13 +3,15 @@ import { timingSafeEqual } from "node:crypto";
 import { Readable } from "node:stream";
 import type { Registry } from "../src/types";
 import { loadRegistry, resolveModel } from "./registry";
+import { OpenAISseTranslator, toAnthropicResponse, toGatewayError } from "./openai-adapter";
 import { buildUpstreamRequest, errorBody, GatewayError } from "./upstream";
 
 /**
  * Anthropic-compatible 多模型网关（本地/自有服务器运行，不部署到 Pages）。
  *
- *   POST /v1/messages  Anthropic Messages 格式请求，按 body.model 路由到 provider，
- *                      响应（含 stream:true 的 SSE）原样透传 —— 不做协议转换。
+ *   POST /v1/messages  Anthropic Messages 格式请求，按 body.model 路由到 provider。
+ *                      anthropic 协议 provider：响应（含 stream:true 的 SSE）原样透传；
+ *                      openai 协议 provider：经适配层做 Messages ⇄ chat/completions 转换。
  *   GET  /v1/models    从 registry 生成模型清单。
  *   GET  /healthz      存活检查。
  *
@@ -105,7 +107,12 @@ async function handleMessages(
     body: upstream.body,
   });
 
-  // 状态码 + 关键头 + body 原样透传；stream:true 时逐字节 pipe SSE，不缓冲不改写
+  if (resolved.provider.protocol === "openai") {
+    await relayOpenAI(res, upstreamRes, modelId, body.stream === true);
+    return;
+  }
+
+  // anthropic 协议：状态码 + 关键头 + body 原样透传；stream:true 时逐字节 pipe SSE，不缓冲不改写
   const passHeaders: Record<string, string> = {};
   for (const name of ["content-type", "anthropic-request-id", "request-id", "cache-control"]) {
     const v = upstreamRes.headers.get(name);
@@ -117,6 +124,35 @@ async function handleMessages(
   } else {
     res.end();
   }
+}
+
+/** openai 协议：上游 chat/completions 响应转回 Anthropic 格式（含 SSE 事件翻译） */
+async function relayOpenAI(
+  res: http.ServerResponse,
+  upstreamRes: Response,
+  gatewayModelId: string,
+  wantStream: boolean,
+): Promise<void> {
+  if (!upstreamRes.ok) {
+    throw toGatewayError(upstreamRes.status, await upstreamRes.text());
+  }
+  const isSse = upstreamRes.headers.get("content-type")?.includes("text/event-stream") ?? false;
+  if (wantStream && isSse && upstreamRes.body) {
+    res.writeHead(200, { "content-type": "text/event-stream", "cache-control": "no-cache" });
+    const translator = new OpenAISseTranslator(gatewayModelId);
+    const decoder = new TextDecoder();
+    for await (const chunk of upstreamRes.body as unknown as AsyncIterable<Uint8Array>) {
+      const out = translator.feed(decoder.decode(chunk, { stream: true }));
+      if (out) res.write(out);
+    }
+    const tail = translator.end();
+    if (tail) res.write(tail);
+    res.end();
+    return;
+  }
+  const json = (await upstreamRes.json()) as Record<string, unknown>;
+  res.writeHead(200, { "content-type": "application/json" });
+  res.end(JSON.stringify(toAnthropicResponse(json, gatewayModelId)));
 }
 
 function handleModels(res: http.ServerResponse, registry: Registry): void {

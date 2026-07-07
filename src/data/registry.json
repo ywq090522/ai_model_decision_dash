@@ -43,6 +43,39 @@
       "apiKeyEnv": "ZHIPU_API_KEY",
       "structuredOutput": false,
       "notes": "官方 Claude API 兼容层，Bearer 鉴权（2026-07 官方文档核实）"
+    },
+    {
+      "key": "openai",
+      "label": "OpenAI 官方（OpenAI 协议）",
+      "protocol": "openai",
+      "baseUrl": "https://api.openai.com",
+      "messagesPath": "/v1/chat/completions",
+      "auth": "bearer",
+      "apiKeyEnv": "OPENAI_API_KEY",
+      "structuredOutput": false,
+      "notes": "chat/completions 端点，Bearer 鉴权（2026-07 官方文档核实）；经网关适配层做 Messages ⇄ chat/completions 转换，流式 tool_use 暂不支持"
+    },
+    {
+      "key": "gemini",
+      "label": "Google Gemini（OpenAI 兼容）",
+      "protocol": "openai",
+      "baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai",
+      "messagesPath": "/chat/completions",
+      "auth": "bearer",
+      "apiKeyEnv": "GEMINI_API_KEY",
+      "structuredOutput": false,
+      "notes": "官方 OpenAI 兼容端点，Bearer 鉴权（2026-07 官方文档核实）；部分 OpenAI 参数会被其兼容层静默忽略"
+    },
+    {
+      "key": "openrouter",
+      "label": "OpenRouter（OpenAI 协议聚合）",
+      "protocol": "openai",
+      "baseUrl": "https://openrouter.ai/api",
+      "messagesPath": "/v1/chat/completions",
+      "auth": "bearer",
+      "apiKeyEnv": "OPENROUTER_API_KEY",
+      "structuredOutput": false,
+      "notes": "第三方聚合端点，Bearer 鉴权（2026-07 官方文档核实）；模型 slug 以其 /api/v1/models 为准"
     }
   ],
   "models": [
@@ -101,6 +134,42 @@
       "id": "glm-4.7",
       "provider": "zhipu",
       "upstreamModel": "glm-4.7"
+    },
+    {
+      "id": "gpt-5.5",
+      "provider": "openai",
+      "upstreamModel": "gpt-5.5"
+    },
+    {
+      "id": "gpt-5.4",
+      "provider": "openai",
+      "upstreamModel": "gpt-5.4"
+    },
+    {
+      "id": "gpt-5.4-mini",
+      "provider": "openai",
+      "upstreamModel": "gpt-5.4-mini"
+    },
+    {
+      "id": "gemini-3.5-flash",
+      "provider": "gemini",
+      "upstreamModel": "gemini-3.5-flash"
+    },
+    {
+      "id": "gemini-2.5-pro",
+      "provider": "gemini",
+      "upstreamModel": "gemini-2.5-pro"
+    },
+    {
+      "id": "gemini-2.5-flash",
+      "provider": "gemini",
+      "upstreamModel": "gemini-2.5-flash"
+    },
+    {
+      "id": "openrouter-llama-3.3-70b-free",
+      "provider": "openrouter",
+      "upstreamModel": "meta-llama/llama-3.3-70b-instruct:free",
+      "notes": "免费额度模型，slug 经 OpenRouter models API 核实（2026-07）"
     }
   ]
 }

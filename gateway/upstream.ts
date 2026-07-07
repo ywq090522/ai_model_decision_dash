@@ -1,5 +1,6 @@
 import type { GatewayProvider } from "../src/types";
 import type { ResolvedModel } from "./registry";
+import { toOpenAIRequest } from "./openai-adapter";
 
 /**
  * 路由层核心（纯函数，便于测试）：
@@ -56,10 +57,10 @@ export function buildAuthHeaders(
   env: NodeJS.ProcessEnv = process.env,
 ): Record<string, string> {
   const key = apiKeyFor(provider, env);
-  const headers: Record<string, string> = {
-    "content-type": "application/json",
-    "anthropic-version": ANTHROPIC_VERSION,
-  };
+  const headers: Record<string, string> = { "content-type": "application/json" };
+  if (provider.protocol === "anthropic") {
+    headers["anthropic-version"] = ANTHROPIC_VERSION;
+  }
   if (provider.auth === "x-api-key") {
     headers["x-api-key"] = key;
   } else {
@@ -69,8 +70,9 @@ export function buildAuthHeaders(
 }
 
 /**
- * 构造完整上游请求：url = baseUrl + messagesPath；
- * body.model 替换为 upstreamModel，其余字段原样保留（Anthropic 格式透传）。
+ * 构造完整上游请求：url = baseUrl + messagesPath。
+ * 协议分发点：anthropic = body.model 替换为 upstreamModel、其余字段原样透传；
+ * openai = 经适配层转换为 chat/completions 请求体（响应/SSE 的反向转换在 server.ts）。
  */
 export function buildUpstreamRequest(
   resolved: ResolvedModel,
@@ -78,18 +80,13 @@ export function buildUpstreamRequest(
   env: NodeJS.ProcessEnv = process.env,
 ): UpstreamRequest {
   const { provider, model } = resolved;
-  // 协议分发点：openai 协议需要 Messages ⇄ chat/completions 的请求/响应/SSE 转换，
-  // 适配层实现前先在此拒绝，避免把 Anthropic 格式请求原样发给 OpenAI 兼容端点。
-  if (provider.protocol !== "anthropic") {
-    throw new GatewayError(
-      501,
-      "not_implemented",
-      `provider "${provider.key}" 使用 ${provider.protocol} 协议，网关暂未实现该协议的转换适配层（当前仅支持 anthropic 协议透传）`,
-    );
-  }
+  const body =
+    provider.protocol === "openai"
+      ? toOpenAIRequest(requestBody, model.upstreamModel)
+      : { ...requestBody, model: model.upstreamModel };
   return {
     url: `${provider.baseUrl}${provider.messagesPath}`,
     headers: buildAuthHeaders(provider, env),
-    body: JSON.stringify({ ...requestBody, model: model.upstreamModel }),
+    body: JSON.stringify(body),
   };
 }

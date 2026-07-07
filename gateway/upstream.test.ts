@@ -78,20 +78,32 @@ describe("buildUpstreamRequest", () => {
     ]);
   });
 
-  it("openai 协议 provider：适配层未实现前抛 501，不向上游透传", () => {
+  it("openai 协议 provider：经适配层转为 chat/completions 请求，不带 anthropic-version 头", () => {
     const openaiResolved = {
-      provider: { ...bearerProvider, key: "p3", protocol: "openai" as const },
+      provider: {
+        ...bearerProvider,
+        key: "p3",
+        protocol: "openai" as const,
+        baseUrl: "https://api.p3.example",
+        messagesPath: "/v1/chat/completions",
+      },
       model: { id: "front-id", provider: "p3", upstreamModel: "real-upstream-id" },
     };
-    try {
-      buildUpstreamRequest(openaiResolved, { model: "front-id" }, { P2_API_KEY: "k" });
-      expect.unreachable();
-    } catch (e) {
-      const err = e as GatewayError;
-      expect(err).toBeInstanceOf(GatewayError);
-      expect(err.status).toBe(501);
-      expect(err.errorType).toBe("not_implemented");
-      expect(err.message).toContain("openai");
-    }
+    const req = buildUpstreamRequest(
+      openaiResolved,
+      {
+        model: "front-id",
+        max_tokens: 10,
+        messages: [{ role: "user", content: "hi" }],
+      },
+      { P2_API_KEY: "k" },
+    );
+    expect(req.url).toBe("https://api.p3.example/v1/chat/completions");
+    expect(Object.keys(req.headers).sort()).toEqual(["authorization", "content-type"]);
+    const body = JSON.parse(req.body) as Record<string, unknown>;
+    expect(body.model).toBe("real-upstream-id");
+    expect(body.max_completion_tokens).toBe(10);
+    expect(body.max_tokens).toBeUndefined();
+    expect(body.messages).toEqual([{ role: "user", content: "hi" }]);
   });
 });

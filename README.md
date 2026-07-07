@@ -54,8 +54,9 @@ ai_model_decision_dash/
 ├── .env.example                 # 网关/管线用的 key 环境变量名清单（复制为 .env）
 ├── gateway/                     # ★ 多模型网关（不进前端 bundle）
 │   ├── registry.ts              # registry 加载 + 模型→provider 路由解析
-│   ├── upstream.ts              # 鉴权头构造（x-api-key / bearer）+ 上游请求组装
-│   ├── server.ts                # node:http 服务：/v1/messages 透传（含 SSE）+ /v1/models
+│   ├── upstream.ts              # 鉴权头构造（x-api-key / bearer）+ 上游请求组装（按 protocol 分发）
+│   ├── openai-adapter.ts        # OpenAI 协议适配层：Messages ⇄ chat/completions 请求/响应/SSE 转换
+│   ├── server.ts                # node:http 服务：/v1/messages 透传或经适配层转换（含 SSE）+ /v1/models
 │   ├── parse-client.ts          # 管线用库级路由客户端（Anthropic SDK 换 baseURL/鉴权）
 │   └── *.test.ts                # 网关单元/集成测试（mock 上游，不打真实 API）
 ├── pipeline/                    # 数据管线（不进前端 bundle）
@@ -124,15 +125,16 @@ ai_model_decision_dash/
 
 ## 多模型网关（Anthropic-compatible）
 
-DeepSeek、Moonshot Kimi、智谱 GLM 都提供**原生 Anthropic Messages 兼容端点**，所以网关不做任何协议转换（不引入 OpenAI 协议）——只做三件事：按 `model` 查 registry、注入对应 provider 的鉴权头、把请求/响应原样透传。
+对外统一 Anthropic Messages 格式，按 provider 的 `protocol` 分两条路：DeepSeek、Moonshot Kimi、智谱 GLM 提供**原生 Anthropic 兼容端点**（`protocol: "anthropic"`），请求/响应原样透传不做转换；OpenAI、Gemini、OpenRouter 只有 OpenAI 协议端点（`protocol: "openai"`），经网关适配层（`gateway/openai-adapter.ts`）做 Messages ⇄ chat/completions 双向转换。
 
 ```
                    ┌── GET /v1/models ──── registry 生成模型清单
 调用方（curl/SDK）──┤
  Anthropic 格式    └── POST /v1/messages ─ 按 body.model 查 src/data/registry.json
-                                            → provider(baseUrl + messagesPath + 鉴权方式)
+                                            → provider(baseUrl + messagesPath + 鉴权方式 + protocol)
                                             → 替换为 upstreamModel，注入 x-api-key 或 Bearer
-                                            → 响应原样透传（stream:true 时 SSE 逐字节 pipe）
+                                            → anthropic 协议：响应原样透传（stream:true 时 SSE 逐字节 pipe）
+                                            → openai 协议：请求/响应/SSE 事件经适配层双向转换
 ```
 
 ### 用法
@@ -153,34 +155,37 @@ curl 127.0.0.1:8788/v1/messages \
 
 ### 内置 provider（均已对照官方文档核实，2026-07）
 
-| provider | 端点 | 鉴权 | 环境变量 |
-|---|---|---|---|
-| Anthropic 官方 | `api.anthropic.com/v1/messages` | `x-api-key` | `ANTHROPIC_API_KEY` |
-| DeepSeek | `api.deepseek.com/anthropic/v1/messages` | `x-api-key` | `DEEPSEEK_API_KEY` |
-| Moonshot Kimi | `api.moonshot.cn/anthropic/v1/messages` | `Bearer` | `MOONSHOT_API_KEY` |
-| 智谱 GLM | `open.bigmodel.cn/api/anthropic/v1/messages` | `Bearer` | `ZHIPU_API_KEY` |
+| provider | 协议 | 端点 | 鉴权 | 环境变量 |
+|---|---|---|---|---|
+| Anthropic 官方 | anthropic | `api.anthropic.com/v1/messages` | `x-api-key` | `ANTHROPIC_API_KEY` |
+| DeepSeek | anthropic | `api.deepseek.com/anthropic/v1/messages` | `x-api-key` | `DEEPSEEK_API_KEY` |
+| Moonshot Kimi | anthropic | `api.moonshot.cn/anthropic/v1/messages` | `Bearer` | `MOONSHOT_API_KEY` |
+| 智谱 GLM | anthropic | `open.bigmodel.cn/api/anthropic/v1/messages` | `Bearer` | `ZHIPU_API_KEY` |
+| OpenAI 官方 | openai | `api.openai.com/v1/chat/completions` | `Bearer` | `OPENAI_API_KEY` |
+| Google Gemini | openai | `generativelanguage.googleapis.com/v1beta/openai/chat/completions` | `Bearer` | `GEMINI_API_KEY` |
+| OpenRouter | openai | `openrouter.ai/api/v1/chat/completions` | `Bearer` | `OPENROUTER_API_KEY` |
 
 ### 新增 provider / 模型
 
 改 `src/data/registry.json` 即可（Zod schema 在 `src/data/schema.ts`，网关启动即校验）：
 
-1. `providers` 加一条：`key / label / protocol / baseUrl / messagesPath / auth（x-api-key 或 bearer）/ apiKeyEnv / structuredOutput / notes`。**目前只接入原生 Anthropic 兼容端点（`protocol: "anthropic"`）**，且端点信息必须先对照官方文档核实。
+1. `providers` 加一条：`key / label / protocol（anthropic 或 openai）/ baseUrl / messagesPath / auth（x-api-key 或 bearer）/ apiKeyEnv / structuredOutput / notes`。端点信息必须先对照官方文档核实。
 2. `models` 加一条：`id`（网关对外 id，尽量与 `models.json` 对齐以获得对照表联动）→ `provider` + `upstreamModel`（发给上游的真实 id）。
 3. 在 `.env.example` 补上新变量名，跑 `npm test`。
 
-### 扩展到 OpenAI 协议 provider（OpenAI / Gemini / OpenRouter，未实现）
+原生 Anthropic 兼容端点选 `protocol: "anthropic"`（零转换透传，首选）；只有 OpenAI 协议端点的厂商选 `protocol: "openai"`，自动走适配层。
 
-provider 配置已有 `protocol` 字段（`"anthropic" | "openai"`，缺省 `anthropic`）作为扩展点。当前 `openai` 协议在两个路由分发点被显式拒绝（网关 `gateway/upstream.ts` 返回 501；管线 `gateway/parse-client.ts` 抛错），接入步骤：
+### OpenAI 协议适配层（gateway/openai-adapter.ts）
 
-1. 在 `gateway/upstream.ts` 的协议分发点实现 `openai` 适配层：Anthropic Messages ⇄ chat/completions 的请求体、响应体、SSE 事件三类转换（这是唯一需要写代码的地方，registry / 鉴权 / key 管理逻辑全部复用）。
-2. registry 加 `protocol: "openai"` 的 provider 条目：OpenAI 官方、Gemini（走其 OpenAI 兼容端点）、OpenRouter，以及任何 OpenAI 兼容端点——**端点路径与鉴权方式须先对照各家官方文档核实**，与现有条目同等标准。
-3. 已提供原生 Anthropic 兼容端点的厂商（DeepSeek / Kimi / GLM 等）继续走 `anthropic` 透传，不受影响。
+`protocol: "openai"` 的 provider 经适配层做三类转换：请求体（system / 文本 / 图片 / tool_use / tool_result / tools / tool_choice → chat/completions 格式，`max_tokens` → `max_completion_tokens`）、响应体（`tool_calls` → `tool_use`、finish_reason → stop_reason、usage 字段映射）、SSE 事件流（chunk delta → Anthropic 事件序列）。转换是白名单式的：Anthropic 特有参数（`thinking`、`top_k`、`cache_control`）在 OpenAI 协议上没有对应物，直接丢弃不改写语义。
+
+v1 边界：**流式 tool_use 暂不支持**——上游流式返回 `tool_calls` 时网关发 Anthropic `error` 事件并终止（不静默丢失）；工具调用请用 `stream:false`，非流式已完整支持。管线的解析模型（`PARSER_MODEL`）仍仅限 anthropic 协议 provider（`gateway/parse-client.ts` 基于 Anthropic SDK）。
 
 ### 边界与后续
 
-- **streaming 目前是 SSE 原样透传**（不解析、不缓冲、不改写事件），后续再做事件标准化。
+- **anthropic 协议的 streaming 是 SSE 原样透传**（不解析、不缓冲、不改写事件）；openai 协议经适配层做事件翻译，流式 tool_use 见上节。
 - 网关**不部署到 GitHub Pages**（Pages 只有静态文件），前端 GitHub Pages 不会调用 gateway，也不展示 registry/provider 配置；网关用法见本节和 `DEPLOY.md`。
-- 各家兼容端点对 Anthropic 参数的支持程度不一（如 DeepSeek 忽略 `budget_tokens`），以各厂商文档为准；网关不做参数改写。
+- 各家兼容端点对 Anthropic 参数的支持程度不一（如 DeepSeek 忽略 `budget_tokens`，Gemini 的 OpenAI 兼容层会静默忽略部分参数），以各厂商文档为准；除协议转换必需的映射外，网关不做参数改写。
 
 ## 自动数据管线
 

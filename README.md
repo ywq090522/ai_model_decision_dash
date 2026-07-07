@@ -179,11 +179,11 @@ curl 127.0.0.1:8788/v1/messages \
 
 `protocol: "openai"` 的 provider 经适配层做三类转换：请求体（system / 文本 / 图片 / tool_use / tool_result / tools / tool_choice → chat/completions 格式，`max_tokens` → `max_completion_tokens`）、响应体（`tool_calls` → `tool_use`、finish_reason → stop_reason、usage 字段映射）、SSE 事件流（chunk delta → Anthropic 事件序列）。转换是白名单式的：Anthropic 特有参数（`thinking`、`top_k`、`cache_control`）在 OpenAI 协议上没有对应物，直接丢弃不改写语义。
 
-v1 边界：**流式 tool_use 暂不支持**——上游流式返回 `tool_calls` 时网关发 Anthropic `error` 事件并终止（不静默丢失）；工具调用请用 `stream:false`，非流式已完整支持。管线的解析模型（`PARSER_MODEL`）仍仅限 anthropic 协议 provider（`gateway/parse-client.ts` 基于 Anthropic SDK）。
+流式 tool_use 也已支持：上游 `tool_calls` 的 arguments 片段原样转成 `input_json_delta`（每个 tool_call index 对应一个 `tool_use` content block，前块 stop 后块 start），网关不缓冲不校验 JSON，由客户端照 Anthropic 语义拼装。管线的解析模型（`PARSER_MODEL`）仍仅限 anthropic 协议 provider（`gateway/parse-client.ts` 基于 Anthropic SDK）。
 
 ### 边界与后续
 
-- **anthropic 协议的 streaming 是 SSE 原样透传**（不解析、不缓冲、不改写事件）；openai 协议经适配层做事件翻译，流式 tool_use 见上节。
+- **anthropic 协议的 streaming 是 SSE 原样透传**（不解析、不缓冲、不改写事件）；openai 协议经适配层做事件翻译（含流式 tool_use，见上节）。
 - 网关**不部署到 GitHub Pages**（Pages 只有静态文件），前端 GitHub Pages 不会调用 gateway，也不展示 registry/provider 配置；网关用法见本节和 `DEPLOY.md`。
 - 各家兼容端点对 Anthropic 参数的支持程度不一（如 DeepSeek 忽略 `budget_tokens`，Gemini 的 OpenAI 兼容层会静默忽略部分参数），以各厂商文档为准；除协议转换必需的映射外，网关不做参数改写。
 

@@ -8,8 +8,8 @@ import { GatewayError } from "./upstream";
  * 边界（v1）：
  * - 请求：支持 system / 文本 / 图片(base64·url) / tool_use / tool_result / tools / tool_choice；
  *   Anthropic 特有参数（thinking、top_k、cache_control）没有对应物，直接丢弃不改写语义。
- * - 流式：支持文本增量；上游流式返回 tool_calls 时发 Anthropic error 事件并终止
- *   （工具调用请用 stream:false，非流式已完整支持）。
+ * - 流式：支持文本增量与 tool_use 增量（tool_calls 的 arguments 片段
+ *   原样转成 input_json_delta，由客户端拼装，网关不缓冲不校验 JSON）。
  */
 
 type Json = Record<string, unknown>;
@@ -259,10 +259,13 @@ function sseEvent(event: string, data: Json): string {
 export class OpenAISseTranslator {
   private buffer = "";
   private started = false;
-  private blockOpen = false;
   private closed = false;
   private finishReason: string | null = null;
   private usage: Json | undefined;
+  // 当前打开的 content block；openaiIndex 用于把 tool_calls 增量归属到同一个 tool_use 块
+  private block: { anthropicIndex: number; kind: "text" | "tool"; openaiIndex?: number } | null =
+    null;
+  private nextIndex = 0;
 
   constructor(private gatewayModelId: string) {}
 
@@ -322,44 +325,63 @@ export class OpenAISseTranslator {
     if (typeof choice.finish_reason === "string") this.finishReason = choice.finish_reason;
 
     const delta = choice.delta as Json | undefined;
-    if (delta?.tool_calls) {
-      // v1 边界：流式 tool_use 需要增量拼装 input_json_delta，暂不支持 —— 明确报错而不是静默丢失
-      this.closed = true;
-      return (
-        out +
-        sseEvent("error", {
-          type: "error",
-          error: {
-            type: "api_error",
-            message: "网关 openai 协议适配层暂不支持流式 tool_use，请改用 stream:false 发起工具调用",
-          },
-        })
-      );
-    }
     if (typeof delta?.content === "string" && delta.content !== "") {
-      if (!this.blockOpen) {
-        this.blockOpen = true;
+      if (this.block?.kind !== "text") {
+        out += this.closeBlock();
+        const index = this.nextIndex++;
+        this.block = { anthropicIndex: index, kind: "text" };
         out += sseEvent("content_block_start", {
           type: "content_block_start",
-          index: 0,
+          index,
           content_block: { type: "text", text: "" },
         });
       }
       out += sseEvent("content_block_delta", {
         type: "content_block_delta",
-        index: 0,
+        index: this.block.anthropicIndex,
         delta: { type: "text_delta", text: delta.content },
       });
+    }
+    for (const raw of (delta?.tool_calls as Json[] | undefined) ?? []) {
+      const openaiIndex = typeof raw.index === "number" ? raw.index : 0;
+      const fn = raw.function as Json | undefined;
+      // 新的 tool_call index（首个增量带 id/name）→ 关掉当前块，开新的 tool_use 块
+      if (this.block?.kind !== "tool" || this.block.openaiIndex !== openaiIndex) {
+        out += this.closeBlock();
+        const index = this.nextIndex++;
+        this.block = { anthropicIndex: index, kind: "tool", openaiIndex };
+        out += sseEvent("content_block_start", {
+          type: "content_block_start",
+          index,
+          content_block: {
+            type: "tool_use",
+            id: typeof raw.id === "string" && raw.id !== "" ? raw.id : `toolu_gw_${openaiIndex}`,
+            name: String(fn?.name ?? ""),
+            input: {},
+          },
+        });
+      }
+      if (typeof fn?.arguments === "string" && fn.arguments !== "") {
+        out += sseEvent("content_block_delta", {
+          type: "content_block_delta",
+          index: this.block.anthropicIndex,
+          delta: { type: "input_json_delta", partial_json: fn.arguments },
+        });
+      }
     }
     return out;
   }
 
+  private closeBlock(): string {
+    if (!this.block) return "";
+    const index = this.block.anthropicIndex;
+    this.block = null;
+    return sseEvent("content_block_stop", { type: "content_block_stop", index });
+  }
+
   private finish(): string {
     this.closed = true;
-    let out = "";
-    if (this.blockOpen) {
-      out += sseEvent("content_block_stop", { type: "content_block_stop", index: 0 });
-    }
+    let out = this.closeBlock();
     out += sseEvent("message_delta", {
       type: "message_delta",
       delta: { stop_reason: mapStopReason(this.finishReason), stop_sequence: null },

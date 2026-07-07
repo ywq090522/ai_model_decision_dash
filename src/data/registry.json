@@ -53,7 +53,7 @@
       "auth": "bearer",
       "apiKeyEnv": "OPENAI_API_KEY",
       "structuredOutput": false,
-      "notes": "chat/completions 端点，Bearer 鉴权（2026-07 官方文档核实）；经网关适配层做 Messages ⇄ chat/completions 转换，流式 tool_use 暂不支持"
+      "notes": "chat/completions 端点，Bearer 鉴权（2026-07 官方文档核实）；经网关适配层做 Messages ⇄ chat/completions 转换（含流式 tool_use）"
     },
     {
       "key": "gemini",
@@ -170,6 +170,12 @@
       "provider": "openrouter",
       "upstreamModel": "meta-llama/llama-3.3-70b-instruct:free",
       "notes": "免费额度模型，slug 经 OpenRouter models API 核实（2026-07）"
+    },
+    {
+      "id": "openrouter-nemotron-3-nano-free",
+      "provider": "openrouter",
+      "upstreamModel": "nvidia/nemotron-3-nano-30b-a3b:free",
+      "notes": "免费额度模型（支持 tools），slug 经 OpenRouter models API 核实（2026-07）；llama 免费池饱和时的替代"
     }
   ]
 }

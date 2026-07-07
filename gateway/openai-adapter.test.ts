@@ -301,19 +301,88 @@ describe("OpenAISseTranslator", () => {
     expect(tail).toContain("message_stop");
   });
 
-  it("流式 tool_calls：发 Anthropic error 事件并终止，不静默丢失", () => {
+  it("流式 tool_use：文本块后接 tool_use 块，arguments 片段 → input_json_delta", () => {
     const t = new OpenAISseTranslator("front-id");
-    const out = t.feed(
+    let out = t.feed(sseChunk({ id: "x", choices: [{ delta: { content: "先查" } }] }));
+    out += t.feed(
       sseChunk({
-        id: "x",
         choices: [
-          { delta: { tool_calls: [{ index: 0, function: { name: "f", arguments: "" } }] } },
+          {
+            delta: {
+              tool_calls: [
+                { index: 0, id: "call_1", function: { name: "get_weather", arguments: "" } },
+              ],
+            },
+          },
         ],
       }),
     );
-    expect(out).toContain("event: error");
-    expect(out).toContain("stream:false");
-    expect(t.feed(sseChunk({ choices: [{ delta: { content: "后续" } }] }))).toBe("");
+    // arguments 分两个 chunk 到达
+    out += t.feed(
+      sseChunk({
+        choices: [{ delta: { tool_calls: [{ index: 0, function: { arguments: '{"city":' } }] } }],
+      }),
+    );
+    out += t.feed(
+      sseChunk({
+        choices: [{ delta: { tool_calls: [{ index: 0, function: { arguments: '"北京"}' } }] } }],
+      }),
+    );
+    out += t.feed(sseChunk({ choices: [{ delta: {}, finish_reason: "tool_calls" }] }));
+    out += t.feed("data: [DONE]\n\n");
+
+    // 文本块（index 0）先开先合，tool_use 块（index 1）随后
+    expect(out).toContain('"content_block":{"type":"text","text":""}');
+    expect(out).toContain(
+      '"content_block":{"type":"tool_use","id":"call_1","name":"get_weather","input":{}}',
+    );
+    expect(out).toContain('{"type":"content_block_stop","index":0}');
+    expect(out).toContain('{"type":"content_block_stop","index":1}');
+    expect(out).toContain('"partial_json":"{\\"city\\":"');
+    expect(out).toContain('"partial_json":"\\"北京\\"}"');
+    expect(out).toContain('"stop_reason":"tool_use"');
+    // tool_use 块的 start 在文本块 stop 之后
+    expect(out.indexOf('"type":"tool_use"')).toBeGreaterThan(
+      out.indexOf('{"type":"content_block_stop","index":0}'),
+    );
+  });
+
+  it("并行 tool_calls：不同 index 各开一个 tool_use 块，前块先收尾", () => {
+    const t = new OpenAISseTranslator("front-id");
+    let out = t.feed(
+      sseChunk({
+        id: "x",
+        choices: [
+          {
+            delta: {
+              tool_calls: [{ index: 0, id: "call_a", function: { name: "fa", arguments: "{}" } }],
+            },
+          },
+        ],
+      }),
+    );
+    out += t.feed(
+      sseChunk({
+        choices: [
+          {
+            delta: {
+              tool_calls: [{ index: 1, id: "call_b", function: { name: "fb", arguments: "{}" } }],
+            },
+          },
+        ],
+      }),
+    );
+    out += t.feed(sseChunk({ choices: [{ delta: {}, finish_reason: "tool_calls" }] }));
+    out += t.feed("data: [DONE]\n\n");
+
+    expect(out).toContain('"id":"call_a","name":"fa"');
+    expect(out).toContain('"id":"call_b","name":"fb"');
+    // call_b 的块开始前，call_a 的块（index 0）必须已 stop
+    expect(out.indexOf('"id":"call_b"')).toBeGreaterThan(
+      out.indexOf('{"type":"content_block_stop","index":0}'),
+    );
+    expect(out).toContain('{"type":"content_block_stop","index":1}');
+    expect(out).toContain('"stop_reason":"tool_use"');
   });
 });
 

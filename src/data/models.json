@@ -7,7 +7,7 @@
     "scoreNote": "scores 为编辑评分（0-5），基于公开基准与社区口碑的主观判断，不是官方数据，欢迎按团队实测修改。",
     "unknownNote": "价格或参数为 null 表示未能从官方渠道核实（unknown），绝不编造。verified=true 表示价格来自官方定价页。",
     "pipeline": {
-      "lastRun": "2026-07-07T19:31:09.410Z",
+      "lastRun": "2026-07-07T19:34:22.422Z",
       "sources": [
         {
           "source": "OpenAI 官方定价页",
@@ -36,7 +36,7 @@
         {
           "source": "OpenRouter Models API（第三方转发价）",
           "status": "ok",
-          "fetchedAt": "2026-07-07T19:31:08.159Z"
+          "fetchedAt": "2026-07-07T19:34:21.003Z"
         },
         {
           "source": "豆包 (火山引擎)",

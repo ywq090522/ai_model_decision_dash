@@ -1,0 +1,27 @@
+# 最小 CI：PR 和非 main 分支 push 时验证安装 + 测试 + 构建。
+# main 分支已由 deploy.yml 覆盖（同样跑测试+构建），此处排除以免重复执行；
+# 数据管线异常时开的 data-update-review PR 由本 workflow 验证。
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches-ignore: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npx vitest run
+      - run: npm run build

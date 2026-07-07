@@ -2,6 +2,8 @@
 
 大模型选型决策台：对比主流模型的价格 / 上下文 / 能力，估算使用成本，并按场景给出推荐。
 
+**Demo**：<https://ywq090522.github.io/ai_model_decision_dash/>（GitHub Pages，首次启用 Pages 并 push main 后生效，见 `DEPLOY.md`）
+
 架构：**静态前端 + 自动数据更新管线 + Anthropic-compatible 多模型网关**。前端是纯静态站（Vite + React + TypeScript + Tailwind CSS），只消费 `src/data/models.json`，不展示网关配置，**不含任何 API Key**；数据由 GitHub Actions 每周抓取官方定价页自动更新（Zod 校验 + 变更报告），push 到 main 后自动部署 GitHub Pages；网关（`npm run gateway`）在本地/自有服务器运行，用同一份 Anthropic Messages 请求格式按 `model` 路由到各家的 Anthropic 兼容端点。
 
 ## 本地运行
@@ -49,8 +51,9 @@ ai_model_decision_dash/
 ├── vite.config.ts / tsconfig.json / tsconfig.pipeline.json
 ├── tailwind.config.js / postcss.config.js
 ├── .github/workflows/
+│   ├── ci.yml                   # PR / 非 main 分支：安装 + 测试 + 构建（覆盖数据异常 PR）
 │   ├── update-data.yml          # 每周数据管线（异常自动转 PR）
-│   └── deploy.yml               # GitHub Pages 部署 + 密钥泄漏自检
+│   └── deploy.yml               # GitHub Pages 部署 + 密钥泄漏自检（push main 时跑测试+构建）
 ├── .env.example                 # 网关/管线用的 key 环境变量名清单（复制为 .env）
 ├── gateway/                     # ★ 多模型网关（不进前端 bundle）
 │   ├── registry.ts              # registry 加载 + 模型→provider 路由解析

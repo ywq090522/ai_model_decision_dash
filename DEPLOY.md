@@ -19,17 +19,7 @@
 - 不要勾选 `.gitignore`
 - 不要添加 license
 
-本地已经完成初始提交：
-
-```bash
-git log --oneline -1
-```
-
-当前提交：
-
-```text
-77ae5a5 Initial commit
-```
+本地仓库已有完整提交历史，可用 `git log --oneline` 查看。
 
 ## 2. 绑定远端仓库
 

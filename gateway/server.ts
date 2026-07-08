@@ -1,6 +1,6 @@
 import http from "node:http";
 import { timingSafeEqual } from "node:crypto";
-import { Readable } from "node:stream";
+import { pipeline, Readable } from "node:stream";
 import type { Registry } from "../src/types";
 import { loadRegistry, resolveModel } from "./registry";
 import { OpenAISseTranslator, toAnthropicResponse, toGatewayError } from "./openai-adapter";
@@ -28,6 +28,20 @@ export function resolveGatewayHost(env: NodeJS.ProcessEnv = process.env): string
 function configuredAuthToken(env: NodeJS.ProcessEnv): string | null {
   const token = env.GATEWAY_AUTH_TOKEN?.trim();
   return token ? token : null;
+}
+
+/**
+ * 非回环地址监听且未设置 GATEWAY_AUTH_TOKEN 时拒绝启动的原因；可安全启动返回 null。
+ * 不设 token 对外监听等于把全部 provider key 暴露成公开代理，README 的「必须设置」在此强制执行。
+ * 只在 CLI 启动路径检查；createGateway 本身不限制（测试等嵌入方自行负责监听地址）。
+ */
+export function unsafeListenReason(host: string, env: NodeJS.ProcessEnv = process.env): string | null {
+  const loopback = host === "localhost" || host === "::1" || host.startsWith("127.");
+  if (loopback || configuredAuthToken(env)) return null;
+  return (
+    `GATEWAY_HOST=${host} 监听非回环地址但未设置 GATEWAY_AUTH_TOKEN：` +
+    `任何能访问该地址的人都可以用你配置的 provider key 调用上游，拒绝启动。`
+  );
 }
 
 function sendError(res: http.ServerResponse, err: GatewayError): void {
@@ -100,11 +114,18 @@ async function handleMessages(
     );
   }
 
+  // 客户端断开即中止上游请求：LLM 流式输出按 token 计费，不中止上游会继续生成、白白扣费
+  const abort = new AbortController();
+  res.on("close", () => {
+    if (!res.writableFinished) abort.abort();
+  });
+
   const upstream = buildUpstreamRequest(resolved, body);
   const upstreamRes = await fetch(upstream.url, {
     method: "POST",
     headers: upstream.headers,
     body: upstream.body,
+    signal: abort.signal,
   });
 
   if (resolved.provider.protocol === "openai") {
@@ -120,7 +141,12 @@ async function handleMessages(
   }
   res.writeHead(upstreamRes.status, passHeaders);
   if (upstreamRes.body) {
-    Readable.fromWeb(upstreamRes.body as import("node:stream/web").ReadableStream).pipe(res);
+    // pipeline 而非 pipe：任一端提前关闭/出错时销毁另一端，abort 引发的流错误也在回调里吞掉
+    pipeline(
+      Readable.fromWeb(upstreamRes.body as import("node:stream/web").ReadableStream),
+      res,
+      () => {},
+    );
   } else {
     res.end();
   }
@@ -200,6 +226,7 @@ export function createGateway(
           sendError(res, new GatewayError(404, "not_found_error", `未知路由 ${req.method} ${url}`));
         }
       } catch (err) {
+        if (res.destroyed) return; // 客户端已断开，无处可发；abort 中止的上游请求也走到这里
         if (res.headersSent) {
           res.end();
           return;
@@ -226,6 +253,11 @@ if (isMain) {
   }
   const port = Number(process.env.GATEWAY_PORT ?? 8788);
   const host = resolveGatewayHost();
+  const unsafe = unsafeListenReason(host);
+  if (unsafe) {
+    console.error(unsafe);
+    process.exit(1);
+  }
   createGateway().listen(port, host, () => {
     const registry = loadRegistry();
     console.log(`gateway 已启动 http://${host}:${port}`);

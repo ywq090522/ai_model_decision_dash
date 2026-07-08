@@ -156,7 +156,7 @@ curl 127.0.0.1:8788/v1/messages \
        "messages": [{"role": "user", "content": "你好"}]}'
 ```
 
-默认监听地址是 `127.0.0.1`，可用 `GATEWAY_HOST` 覆盖。未设置 `GATEWAY_AUTH_TOKEN` 时仅适合本地开发；如果部署到 VPS 或任何公网可达环境，必须设置 `GATEWAY_AUTH_TOKEN`，调用时带 `Authorization: Bearer <token>`。公网部署建议放在反向代理后面，并启用 HTTPS。
+默认监听地址是 `127.0.0.1`，可用 `GATEWAY_HOST` 覆盖。未设置 `GATEWAY_AUTH_TOKEN` 时仅适合本地开发（网关会强制这一点：监听非回环地址且未设置 token 时直接拒绝启动）；如果部署到 VPS 或任何公网可达环境，必须设置 `GATEWAY_AUTH_TOKEN`，调用时带 `Authorization: Bearer <token>`。公网部署建议放在反向代理后面，并启用 HTTPS。
 
 任何 Anthropic SDK 也可直接指向网关：未启用入站鉴权时可用 `new Anthropic({ baseURL: "http://127.0.0.1:8788", apiKey: "unused" })`。设置 `GATEWAY_AUTH_TOKEN` 后，用 `new Anthropic({ baseURL: "http://127.0.0.1:8788", apiKey: null, authToken: process.env.GATEWAY_AUTH_TOKEN })` 发送 `Authorization: Bearer <token>`；网关会校验入站 `Authorization`，随后剥离入站鉴权头，只向上游发送自己构造的 provider 鉴权头。
 

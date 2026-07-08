@@ -1,11 +1,13 @@
 import http from "node:http";
 import type { AddressInfo } from "node:net";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { Registry } from "../src/types";
-import { createGateway, resolveGatewayHost } from "./server";
+import { createGateway, resolveGatewayHost, unsafeListenReason } from "./server";
 
 /** mock 上游：记录收到的请求，按 body.stream 返回 JSON 或 SSE 分块 */
 let upstreamSeen: { headers: http.IncomingHttpHeaders; body: Record<string, unknown> }[] = [];
+/** 「客户端断开 → 上游被中止」用例的观察位：endless 流的上游连接是否已关闭 */
+let endlessUpstreamClosed = false;
 
 function createMockUpstream(): http.Server {
   return http.createServer((req, res) => {
@@ -14,6 +16,17 @@ function createMockUpstream(): http.Server {
     req.on("end", () => {
       const body = JSON.parse(Buffer.concat(chunks).toString()) as Record<string, unknown>;
       upstreamSeen.push({ headers: req.headers, body });
+      if (body.endless === true) {
+        // 永不主动结束的 SSE：只有网关中止上游请求时，这条连接才会关闭
+        res.writeHead(200, { "content-type": "text/event-stream" });
+        res.write('event: message_start\ndata: {"type":"message_start"}\n\n');
+        const timer = setInterval(() => res.write("data: {}\n\n"), 5);
+        res.on("close", () => {
+          clearInterval(timer);
+          endlessUpstreamClosed = true;
+        });
+        return;
+      }
       if (body.stream === true) {
         res.writeHead(200, { "content-type": "text/event-stream" });
         res.write('event: message_start\ndata: {"type":"message_start"}\n\n');
@@ -132,6 +145,16 @@ describe("gateway server", () => {
     expect(resolveGatewayHost({ GATEWAY_HOST: "" } as NodeJS.ProcessEnv)).toBe("127.0.0.1");
   });
 
+  it("非回环监听且未设 GATEWAY_AUTH_TOKEN → 拒绝启动；回环地址或已设 token → 放行", () => {
+    expect(unsafeListenReason("0.0.0.0", {} as NodeJS.ProcessEnv)).toContain("GATEWAY_AUTH_TOKEN");
+    expect(
+      unsafeListenReason("0.0.0.0", { GATEWAY_AUTH_TOKEN: "t" } as NodeJS.ProcessEnv),
+    ).toBeNull();
+    expect(unsafeListenReason("127.0.0.1", {} as NodeJS.ProcessEnv)).toBeNull();
+    expect(unsafeListenReason("localhost", {} as NodeJS.ProcessEnv)).toBeNull();
+    expect(unsafeListenReason("::1", {} as NodeJS.ProcessEnv)).toBeNull();
+  });
+
   it("GATEWAY_AUTH_TOKEN：/healthz 放行，其他路由缺 token 返回 Anthropic 风格 401", async () => {
     await withGateway(
       { env: { GATEWAY_AUTH_TOKEN: "inbound-secret" } as NodeJS.ProcessEnv },
@@ -224,6 +247,21 @@ describe("gateway server", () => {
     expect(order[0]).toBeGreaterThanOrEqual(0);
     expect(order[1]).toBeGreaterThan(order[0]);
     expect(order[2]).toBeGreaterThan(order[1]);
+  });
+
+  it("客户端中途断开 → 网关中止上游请求，不再消费计费流", async () => {
+    endlessUpstreamClosed = false;
+    const client = new AbortController();
+    const res = await fetch(`${gwBase}/v1/messages`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ model: "front-x", stream: true, endless: true, messages: [] }),
+      signal: client.signal,
+    });
+    // 读到第一个分块（流已建立）后模拟客户端断开
+    await res.body!.getReader().read();
+    client.abort();
+    await vi.waitFor(() => expect(endlessUpstreamClosed).toBe(true), { timeout: 2000 });
   });
 
   it("缺 key → 401，错误信息只含环境变量名，响应不含任何 key 值", async () => {

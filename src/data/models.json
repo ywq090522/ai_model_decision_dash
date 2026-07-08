@@ -1,13 +1,13 @@
 {
   "meta": {
-    "updatedAt": "2026-07-07",
+    "updatedAt": "2026-07-08",
     "priceUnit": "USD or CNY per 1M tokens (see currency field)",
     "defaultCnyPerUsd": 7.2,
     "cnyRateNote": "汇率为估算值，可在成本计算器中调整。人民币计价模型的美元价格按此换算。",
     "scoreNote": "scores 为编辑评分（0-5），基于公开基准与社区口碑的主观判断，不是官方数据，欢迎按团队实测修改。",
     "unknownNote": "价格或参数为 null 表示未能从官方渠道核实（unknown），绝不编造。verified=true 表示价格来自官方定价页。",
     "pipeline": {
-      "lastRun": "2026-07-07T19:34:22.422Z",
+      "lastRun": "2026-07-08T03:06:30.240Z",
       "sources": [
         {
           "source": "OpenAI 官方定价页",
@@ -36,7 +36,7 @@
         {
           "source": "OpenRouter Models API（第三方转发价）",
           "status": "ok",
-          "fetchedAt": "2026-07-07T19:34:21.003Z"
+          "fetchedAt": "2026-07-08T03:06:29.054Z"
         },
         {
           "source": "豆包 (火山引擎)",
@@ -563,7 +563,7 @@
         "旗舰"
       ],
       "notes": "阿里旗舰。按输入长度分级计价，此处为最低档（≤32K）价格；不同来源报价不一致，以 Model Studio 控制台为准。视觉任务需用 Qwen3-VL 系列。",
-      "source": "OpenRouter Models API（第三方转发价）（2026-07-07 自动抓取）",
+      "source": "OpenRouter Models API（第三方转发价）（2026-07-08 自动抓取）",
       "verified": false
     },
     {
@@ -590,7 +590,7 @@
         "中文"
       ],
       "notes": "阿里编码专用模型。当前价格未能核实（unknown），请查阿里云 Model Studio。",
-      "source": "OpenRouter Models API（第三方转发价）（2026-07-07 自动抓取）",
+      "source": "OpenRouter Models API（第三方转发价）（2026-07-08 自动抓取）",
       "verified": false
     },
     {
@@ -617,7 +617,7 @@
         "Agent"
       ],
       "notes": "Moonshot 最新旗舰（2026-04），Agent/工具调用表现好。价格来自第三方汇总，未从官方页直接核实。",
-      "source": "OpenRouter Models API（第三方转发价）（2026-07-07 自动抓取）",
+      "source": "OpenRouter Models API（第三方转发价）（2026-07-08 自动抓取）",
       "verified": false
     },
     {
@@ -644,7 +644,7 @@
         "性价比"
       ],
       "notes": "价格来自第三方汇总，未从官方页直接核实；上下文长度 unknown。",
-      "source": "OpenRouter Models API（第三方转发价）（2026-07-07 自动抓取）",
+      "source": "OpenRouter Models API（第三方转发价）（2026-07-08 自动抓取）",
       "verified": false
     },
     {
@@ -753,7 +753,7 @@
         "开源"
       ],
       "notes": "OpenRouter 免费池，限速同上。OpenRouter 付费模型为原价转发 + 充值时 5.5% 手续费。",
-      "source": "OpenRouter Models API（第三方转发价）（2026-07-07 自动抓取）",
+      "source": "OpenRouter Models API（第三方转发价）（2026-07-08 自动抓取）",
       "verified": false
     }
   ]

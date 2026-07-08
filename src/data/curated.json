@@ -3,7 +3,7 @@
     "defaultCnyPerUsd": 7.2,
     "cnyRateNote": "汇率为估算值，可在成本计算器中调整。人民币计价模型的美元价格按此换算。",
     "scoreNote": "scores 为编辑评分（0-5），基于公开基准与社区口碑的主观判断，不是官方数据，欢迎按团队实测修改。",
-    "unknownNote": "价格或参数为 null 表示未能从官方渠道核实（unknown），绝不编造。verified=true 表示价格来自官方定价页。"
+    "unknownNote": "价格或参数为 null 表示未能从官方渠道核实（unknown），绝不编造。verified=true 表示该价格由数据管线从官方定价页抓取并通过数字回查（verifiedAt 为核实时间）；seed/第三方/手工数据一律 verified=false。"
   },
   "models": [
     {
@@ -33,8 +33,7 @@
         "cachedInputPrice": null,
         "contextWindow": 1000000,
         "maxOutput": 128000,
-        "source": "Anthropic 官方定价（2026-06 缓存）",
-        "verified": true
+        "source": "Anthropic 官方定价（2026-06 缓存）"
       }
     },
     {
@@ -64,8 +63,7 @@
         "cachedInputPrice": null,
         "contextWindow": 1000000,
         "maxOutput": 128000,
-        "source": "Anthropic 官方定价（2026-06 缓存）",
-        "verified": true
+        "source": "Anthropic 官方定价（2026-06 缓存）"
       }
     },
     {
@@ -95,8 +93,7 @@
         "cachedInputPrice": null,
         "contextWindow": 1000000,
         "maxOutput": 128000,
-        "source": "Anthropic 官方定价（2026-06 缓存）",
-        "verified": true
+        "source": "Anthropic 官方定价（2026-06 缓存）"
       }
     },
     {
@@ -125,8 +122,7 @@
         "cachedInputPrice": null,
         "contextWindow": 1000000,
         "maxOutput": 128000,
-        "source": "Anthropic 官方定价（2026-06 缓存）",
-        "verified": true
+        "source": "Anthropic 官方定价（2026-06 缓存）"
       }
     },
     {
@@ -155,8 +151,7 @@
         "cachedInputPrice": null,
         "contextWindow": 200000,
         "maxOutput": 64000,
-        "source": "Anthropic 官方定价（2026-06 缓存）",
-        "verified": true
+        "source": "Anthropic 官方定价（2026-06 缓存）"
       }
     },
     {
@@ -184,8 +179,7 @@
         "cachedInputPrice": 0.5,
         "contextWindow": null,
         "maxOutput": null,
-        "source": "developers.openai.com/api/docs/pricing（2026-07-07 抓取）",
-        "verified": true
+        "source": "developers.openai.com/api/docs/pricing（2026-07-07 抓取）"
       }
     },
     {
@@ -213,8 +207,7 @@
         "cachedInputPrice": 0.25,
         "contextWindow": null,
         "maxOutput": null,
-        "source": "developers.openai.com/api/docs/pricing（2026-07-07 抓取）",
-        "verified": true
+        "source": "developers.openai.com/api/docs/pricing（2026-07-07 抓取）"
       }
     },
     {
@@ -242,8 +235,7 @@
         "cachedInputPrice": null,
         "contextWindow": null,
         "maxOutput": null,
-        "source": "developers.openai.com/api/docs/pricing（2026-07-07 抓取）",
-        "verified": true
+        "source": "developers.openai.com/api/docs/pricing（2026-07-07 抓取）"
       }
     },
     {
@@ -272,8 +264,7 @@
         "cachedInputPrice": null,
         "contextWindow": null,
         "maxOutput": null,
-        "source": "developers.openai.com/api/docs/pricing（2026-07-07 抓取）",
-        "verified": true
+        "source": "developers.openai.com/api/docs/pricing（2026-07-07 抓取）"
       }
     },
     {
@@ -302,8 +293,7 @@
         "cachedInputPrice": null,
         "contextWindow": null,
         "maxOutput": null,
-        "source": "developers.openai.com/api/docs/pricing（2026-07-07 抓取）",
-        "verified": true
+        "source": "developers.openai.com/api/docs/pricing（2026-07-07 抓取）"
       }
     },
     {
@@ -335,8 +325,7 @@
         "cachedInputPrice": null,
         "contextWindow": null,
         "maxOutput": null,
-        "source": "ai.google.dev/gemini-api/docs/pricing（2026-07-07 抓取）",
-        "verified": true
+        "source": "ai.google.dev/gemini-api/docs/pricing（2026-07-07 抓取）"
       }
     },
     {
@@ -365,8 +354,7 @@
         "cachedInputPrice": null,
         "contextWindow": null,
         "maxOutput": null,
-        "source": "ai.google.dev/gemini-api/docs/pricing（2026-07-07 抓取）",
-        "verified": true
+        "source": "ai.google.dev/gemini-api/docs/pricing（2026-07-07 抓取）"
       }
     },
     {
@@ -397,8 +385,7 @@
         "cachedInputPrice": null,
         "contextWindow": null,
         "maxOutput": null,
-        "source": "ai.google.dev/gemini-api/docs/pricing（2026-07-07 抓取）",
-        "verified": true
+        "source": "ai.google.dev/gemini-api/docs/pricing（2026-07-07 抓取）"
       }
     },
     {
@@ -427,8 +414,7 @@
         "cachedInputPrice": null,
         "contextWindow": 1000000,
         "maxOutput": 65536,
-        "source": "ai.google.dev/gemini-api/docs/pricing（2026-07-07 抓取）",
-        "verified": true
+        "source": "ai.google.dev/gemini-api/docs/pricing（2026-07-07 抓取）"
       }
     },
     {
@@ -458,8 +444,7 @@
         "cachedInputPrice": null,
         "contextWindow": 1000000,
         "maxOutput": 65536,
-        "source": "ai.google.dev/gemini-api/docs/pricing（2026-07-07 抓取）",
-        "verified": true
+        "source": "ai.google.dev/gemini-api/docs/pricing（2026-07-07 抓取）"
       }
     },
     {
@@ -488,8 +473,7 @@
         "cachedInputPrice": null,
         "contextWindow": 1000000,
         "maxOutput": 65536,
-        "source": "ai.google.dev/gemini-api/docs/pricing（2026-07-07 抓取）",
-        "verified": true
+        "source": "ai.google.dev/gemini-api/docs/pricing（2026-07-07 抓取）"
       }
     },
     {
@@ -522,8 +506,7 @@
         "cachedInputPrice": 0.003625,
         "contextWindow": 1000000,
         "maxOutput": 384000,
-        "source": "api-docs.deepseek.com/quick_start/pricing（2026-07-07 抓取）",
-        "verified": true
+        "source": "api-docs.deepseek.com/quick_start/pricing（2026-07-07 抓取）"
       }
     },
     {
@@ -555,8 +538,7 @@
         "cachedInputPrice": 0.0028,
         "contextWindow": 1000000,
         "maxOutput": 384000,
-        "source": "api-docs.deepseek.com/quick_start/pricing（2026-07-07 抓取）",
-        "verified": true
+        "source": "api-docs.deepseek.com/quick_start/pricing（2026-07-07 抓取）"
       }
     },
     {
@@ -587,8 +569,7 @@
         "cachedInputPrice": null,
         "contextWindow": 262144,
         "maxOutput": null,
-        "source": "第三方汇总（eesel/DeepInfra，2026-06），官方页未能直接核实",
-        "verified": false
+        "source": "第三方汇总（eesel/DeepInfra，2026-06），官方页未能直接核实"
       }
     },
     {
@@ -619,8 +600,7 @@
         "cachedInputPrice": null,
         "contextWindow": null,
         "maxOutput": null,
-        "source": "unknown",
-        "verified": false
+        "source": "unknown"
       }
     },
     {
@@ -651,8 +631,7 @@
         "cachedInputPrice": 0.16,
         "contextWindow": 131072,
         "maxOutput": null,
-        "source": "第三方汇总（pricepertoken/tokenmix，2026-06）",
-        "verified": false
+        "source": "第三方汇总（pricepertoken/tokenmix，2026-06）"
       }
     },
     {
@@ -683,8 +662,7 @@
         "cachedInputPrice": 0.1,
         "contextWindow": null,
         "maxOutput": null,
-        "source": "第三方汇总（OpenRouter/eesel，2026-06）",
-        "verified": false
+        "source": "第三方汇总（OpenRouter/eesel，2026-06）"
       }
     },
     {
@@ -713,8 +691,7 @@
         "cachedInputPrice": 1.2,
         "contextWindow": null,
         "maxOutput": null,
-        "source": "火山引擎公开报道（2026-06），未从官方定价页直接核实",
-        "verified": false
+        "source": "火山引擎公开报道（2026-06），未从官方定价页直接核实"
       }
     },
     {
@@ -743,8 +720,7 @@
         "cachedInputPrice": null,
         "contextWindow": null,
         "maxOutput": null,
-        "source": "第三方评测汇总（2026-06），未从官方定价页直接核实",
-        "verified": false
+        "source": "第三方评测汇总（2026-06），未从官方定价页直接核实"
       }
     },
     {
@@ -777,8 +753,7 @@
         "cachedInputPrice": null,
         "contextWindow": 163840,
         "maxOutput": null,
-        "source": "openrouter.ai（2026-07 搜索结果）",
-        "verified": false
+        "source": "openrouter.ai（2026-07 搜索结果）"
       }
     },
     {
@@ -810,8 +785,7 @@
         "cachedInputPrice": null,
         "contextWindow": 131072,
         "maxOutput": null,
-        "source": "openrouter.ai（2026-07 搜索结果）",
-        "verified": false
+        "source": "openrouter.ai（2026-07 搜索结果）"
       }
     }
   ]

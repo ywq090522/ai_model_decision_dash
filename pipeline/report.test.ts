@@ -34,7 +34,6 @@ const curated: CuratedData = {
         contextWindow: null,
         maxOutput: null,
         source: "手工",
-        verified: false,
       },
     },
   ],
@@ -67,6 +66,8 @@ const previous: ModelData = {
       notes: "",
       source: "手工",
       verified: false,
+      verifiedAt: null,
+      verificationSource: null,
     },
   ],
 };

@@ -50,9 +50,12 @@ const COLUMNS: { key: SortKey; label: string; numeric?: boolean }[] = [
 export function ModelTable({
   models,
   cnyPerUsd,
+  staleProviders,
 }: {
   models: ModelInfo[];
   cnyPerUsd: number;
+  /** 本次管线运行中数据源 stale 的 provider（来自 meta.pipeline） */
+  staleProviders?: Set<string>;
 }) {
   const [sort, setSort] = useState<SortState>({ key: "inputPrice", dir: 1 });
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -104,6 +107,7 @@ export function ModelTable({
             <ModelRow
               key={m.id}
               m={m}
+              stale={staleProviders?.has(m.provider) ?? false}
               expanded={expanded === m.id}
               onToggle={() => setExpanded(expanded === m.id ? null : m.id)}
             />
@@ -123,10 +127,12 @@ export function ModelTable({
 
 function ModelRow({
   m,
+  stale,
   expanded,
   onToggle,
 }: {
   m: ModelInfo;
+  stale: boolean;
   expanded: boolean;
   onToggle: () => void;
 }) {
@@ -142,9 +148,17 @@ function ModelRow({
             {!m.verified && (
               <span
                 className="rounded bg-paper px-1 py-0.5 text-[10px] text-muted"
-                title="价格未从官方定价页核实"
+                title="价格未经数据管线从官方定价页核实"
               >
                 未核实
+              </span>
+            )}
+            {stale && (
+              <span
+                className="rounded bg-paper px-1 py-0.5 text-[10px] text-warn"
+                title="该厂商的数据源本次抓取失败（stale），显示的是历史 / 兜底数据"
+              >
+                源 stale
               </span>
             )}
           </div>
@@ -176,6 +190,12 @@ function ModelRow({
                 <b className="text-ink">来源：</b>
                 {m.source}
               </span>
+              {m.verifiedAt && m.verificationSource && (
+                <span>
+                  <b className="text-ink">官方核实：</b>
+                  <span className="num">{m.verifiedAt.slice(0, 10)}</span>（{m.verificationSource}）
+                </span>
+              )}
               {m.cachedInputPrice !== null && (
                 <span>
                   <b className="text-ink">缓存输入价：</b>

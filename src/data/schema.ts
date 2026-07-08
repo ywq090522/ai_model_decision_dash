@@ -18,24 +18,33 @@ const price = z.number().min(0).nullable();
 /** 三态能力位：true/false 已确认，null = unknown */
 const tristate = z.boolean().nullable();
 
-export const ModelInfoSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().min(1),
-  provider: z.string().min(1),
-  currency: z.enum(["USD", "CNY"]),
-  inputPrice: price,
-  outputPrice: price,
-  cachedInputPrice: price,
-  contextWindow: z.number().int().positive().nullable(),
-  maxOutput: z.number().int().positive().nullable(),
-  vision: tristate,
-  toolUse: tristate,
-  scores: ModelScoresSchema,
-  tags: z.array(z.string()),
-  notes: z.string(),
-  source: z.string(),
-  verified: z.boolean(),
-});
+export const ModelInfoSchema = z
+  .object({
+    id: z.string().min(1),
+    name: z.string().min(1),
+    provider: z.string().min(1),
+    currency: z.enum(["USD", "CNY"]),
+    inputPrice: price,
+    outputPrice: price,
+    cachedInputPrice: price,
+    contextWindow: z.number().int().positive().nullable(),
+    maxOutput: z.number().int().positive().nullable(),
+    vision: tristate,
+    toolUse: tristate,
+    scores: ModelScoresSchema,
+    tags: z.array(z.string()),
+    notes: z.string(),
+    source: z.string(),
+    /** true 仅当数据由真实管线从官方定价页抓取、LLM 解析并通过数字回查（见 verifiedAt） */
+    verified: z.boolean(),
+    /** 最近一次官方源核实的时间（ISO）；null = 从未经过真实管线核实（seed/第三方/手工） */
+    verifiedAt: z.string().nullable().default(null),
+    /** 核实来源（管线官方源 label）；与 verifiedAt 同生同灭 */
+    verificationSource: z.string().nullable().default(null),
+  })
+  .refine((m) => !m.verified || (m.verifiedAt !== null && m.verificationSource !== null), {
+    message: "verified=true 必须带 verifiedAt 与 verificationSource（seed/fallback 数据不得伪装官方核实）",
+  });
 
 /** 管线每个数据源的运行状态 */
 export const SourceStatusSchema = z.object({
@@ -43,6 +52,8 @@ export const SourceStatusSchema = z.object({
   status: z.enum(["ok", "stale", "error", "manual"]),
   fetchedAt: z.string().nullable(),
   detail: z.string().optional(),
+  /** 该源负责的 provider 列表（UI 据此给 stale 源覆盖的模型打角标） */
+  providers: z.array(z.string()).default([]),
 });
 
 export const PipelineMetaSchema = z.object({
@@ -80,7 +91,10 @@ export const CuratedModelSchema = z.object({
   scores: ModelScoresSchema,
   tags: z.array(z.string()),
   notes: z.string(),
-  /** 管线抓不到时的兜底事实字段（也是首次生成 models.json 的初始值） */
+  /**
+   * 管线抓不到时的兜底事实字段（也是首次生成 models.json 的初始值）。
+   * 注意：兜底数据永远是 verified=false —— 只有真实管线核实过的数据才能 verified。
+   */
   fallback: z.object({
     inputPrice: price,
     outputPrice: price,
@@ -88,7 +102,6 @@ export const CuratedModelSchema = z.object({
     contextWindow: z.number().int().positive().nullable(),
     maxOutput: z.number().int().positive().nullable(),
     source: z.string(),
-    verified: z.boolean(),
   }),
 });
 

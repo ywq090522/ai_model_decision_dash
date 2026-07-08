@@ -19,6 +19,8 @@ const base: ModelInfo = {
   notes: "",
   source: "",
   verified: true,
+  verifiedAt: "2026-07-07T00:00:00Z",
+  verificationSource: "测试源",
 };
 
 const input = { inputTokens: 10_000, outputTokens: 2_000, requests: 100, cnyPerUsd: 7.2 };

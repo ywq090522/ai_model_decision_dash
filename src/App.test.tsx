@@ -35,4 +35,21 @@ describe("App 渲染冒烟测试", () => {
     // qwen3-coder-plus 价格 unknown，应显示 unknown 标记
     expect(html).toContain("unknown");
   });
+
+  it("页头展示数据源新鲜度（来自 meta.pipeline，不硬编码）", () => {
+    const sources = data.meta.pipeline?.sources ?? [];
+    expect(sources.length).toBeGreaterThan(0);
+    const ok = sources.filter((s) => s.status === "ok").length;
+    expect(html).toContain("数据源");
+    expect(html).toContain(`${ok}/${sources.length} 正常`);
+  });
+
+  it("存在 stale 源时给出提示与角标", () => {
+    const staleSources = (data.meta.pipeline?.sources ?? []).filter((s) => s.status === "stale");
+    if (staleSources.length === 0) return; // 全绿时无角标，跳过
+    // SSR 会在文本节点间插入 <!-- -->，先去掉再断言
+    const text = html.replace(/<!-- -->/g, "");
+    expect(text).toContain(`${staleSources.length} 个数据源 stale`);
+    expect(text).toContain("源 stale");
+  });
 });

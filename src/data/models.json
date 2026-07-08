@@ -5,44 +5,60 @@
     "defaultCnyPerUsd": 7.2,
     "cnyRateNote": "汇率为估算值，可在成本计算器中调整。人民币计价模型的美元价格按此换算。",
     "scoreNote": "scores 为编辑评分（0-5），基于公开基准与社区口碑的主观判断，不是官方数据，欢迎按团队实测修改。",
-    "unknownNote": "价格或参数为 null 表示未能从官方渠道核实（unknown），绝不编造。verified=true 表示价格来自官方定价页。",
+    "unknownNote": "价格或参数为 null 表示未能从官方渠道核实（unknown），绝不编造。verified=true 表示该价格由数据管线从官方定价页抓取并通过数字回查（verifiedAt 为核实时间）；seed/第三方/手工数据一律 verified=false。",
     "pipeline": {
-      "lastRun": "2026-07-08T03:17:20.660Z",
+      "lastRun": "2026-07-08T09:11:23.654Z",
       "sources": [
         {
           "source": "OpenAI 官方定价页",
-          "status": "stale",
-          "fetchedAt": null,
-          "detail": "provider \"anthropic\" 未配置密钥：请设置环境变量 ANTHROPIC_API_KEY（本地可写入 .env）"
+          "status": "ok",
+          "fetchedAt": "2026-07-08T09:10:22.076Z",
+          "providers": [
+            "OpenAI"
+          ]
         },
         {
           "source": "Anthropic 官方定价页",
-          "status": "stale",
-          "fetchedAt": null,
-          "detail": "provider \"anthropic\" 未配置密钥：请设置环境变量 ANTHROPIC_API_KEY（本地可写入 .env）"
+          "status": "ok",
+          "fetchedAt": "2026-07-08T09:10:22.305Z",
+          "providers": [
+            "Anthropic"
+          ]
         },
         {
           "source": "Google Gemini 官方定价页",
-          "status": "stale",
-          "fetchedAt": null,
-          "detail": "provider \"anthropic\" 未配置密钥：请设置环境变量 ANTHROPIC_API_KEY（本地可写入 .env）"
+          "status": "ok",
+          "fetchedAt": "2026-07-08T09:10:22.369Z",
+          "providers": [
+            "Google"
+          ]
         },
         {
           "source": "DeepSeek 官方定价页",
-          "status": "stale",
-          "fetchedAt": null,
-          "detail": "provider \"anthropic\" 未配置密钥：请设置环境变量 ANTHROPIC_API_KEY（本地可写入 .env）"
+          "status": "ok",
+          "fetchedAt": "2026-07-08T09:10:22.068Z",
+          "providers": [
+            "DeepSeek"
+          ]
         },
         {
           "source": "OpenRouter Models API（第三方转发价）",
           "status": "ok",
-          "fetchedAt": "2026-07-08T03:17:19.732Z"
+          "fetchedAt": "2026-07-08T09:10:22.221Z",
+          "providers": [
+            "OpenRouter",
+            "Moonshot (Kimi)",
+            "Qwen (阿里云)"
+          ]
         },
         {
           "source": "豆包 (火山引擎)",
           "status": "manual",
           "fetchedAt": null,
-          "detail": "无自动源（JS 渲染/登录墙），沿用 curated 值"
+          "detail": "无自动源（JS 渲染/登录墙），沿用 curated 值",
+          "providers": [
+            "豆包 (火山引擎)"
+          ]
         }
       ]
     }
@@ -55,7 +71,7 @@
       "currency": "USD",
       "inputPrice": 10,
       "outputPrice": 50,
-      "cachedInputPrice": null,
+      "cachedInputPrice": 1,
       "contextWindow": 1000000,
       "maxOutput": 128000,
       "vision": true,
@@ -73,8 +89,10 @@
         "推理"
       ],
       "notes": "Anthropic 最强通用模型，thinking 常开；适合最难的推理与长程 Agent 任务。",
-      "source": "Anthropic 官方定价（2026-06 缓存）",
-      "verified": true
+      "source": "Anthropic 官方定价页（2026-07-08 自动抓取）",
+      "verified": true,
+      "verifiedAt": "2026-07-08T09:10:22.305Z",
+      "verificationSource": "Anthropic 官方定价页"
     },
     {
       "id": "claude-opus-4-8",
@@ -83,7 +101,7 @@
       "currency": "USD",
       "inputPrice": 5,
       "outputPrice": 25,
-      "cachedInputPrice": null,
+      "cachedInputPrice": 0.5,
       "contextWindow": 1000000,
       "maxOutput": 128000,
       "vision": true,
@@ -101,17 +119,19 @@
         "代码"
       ],
       "notes": "长程 Agent / 编码主力，1M 上下文无长文本加价。",
-      "source": "Anthropic 官方定价（2026-06 缓存）",
-      "verified": true
+      "source": "Anthropic 官方定价页（2026-07-08 自动抓取）",
+      "verified": true,
+      "verifiedAt": "2026-07-08T09:10:22.305Z",
+      "verificationSource": "Anthropic 官方定价页"
     },
     {
       "id": "claude-sonnet-5",
       "name": "Claude Sonnet 5",
       "provider": "Anthropic",
       "currency": "USD",
-      "inputPrice": 3,
-      "outputPrice": 15,
-      "cachedInputPrice": null,
+      "inputPrice": 2,
+      "outputPrice": 10,
+      "cachedInputPrice": 0.2,
       "contextWindow": 1000000,
       "maxOutput": 128000,
       "vision": true,
@@ -129,8 +149,10 @@
         "长上下文"
       ],
       "notes": "接近 Opus 的编码/Agent 能力；2026-08-31 前有 $2/$10 首发优惠价。",
-      "source": "Anthropic 官方定价（2026-06 缓存）",
-      "verified": true
+      "source": "Anthropic 官方定价页（2026-07-08 自动抓取）",
+      "verified": true,
+      "verifiedAt": "2026-07-08T09:10:22.305Z",
+      "verificationSource": "Anthropic 官方定价页"
     },
     {
       "id": "claude-sonnet-4-6",
@@ -139,7 +161,7 @@
       "currency": "USD",
       "inputPrice": 3,
       "outputPrice": 15,
-      "cachedInputPrice": null,
+      "cachedInputPrice": 0.3,
       "contextWindow": 1000000,
       "maxOutput": 128000,
       "vision": true,
@@ -156,8 +178,10 @@
         "长上下文"
       ],
       "notes": "上一代 Sonnet，仍在服务；新项目建议直接用 Sonnet 5。",
-      "source": "Anthropic 官方定价（2026-06 缓存）",
-      "verified": true
+      "source": "Anthropic 官方定价页（2026-07-08 自动抓取）",
+      "verified": true,
+      "verifiedAt": "2026-07-08T09:10:22.305Z",
+      "verificationSource": "Anthropic 官方定价页"
     },
     {
       "id": "claude-haiku-4-5",
@@ -166,7 +190,7 @@
       "currency": "USD",
       "inputPrice": 1,
       "outputPrice": 5,
-      "cachedInputPrice": null,
+      "cachedInputPrice": 0.1,
       "contextWindow": 200000,
       "maxOutput": 64000,
       "vision": true,
@@ -183,8 +207,10 @@
         "快速"
       ],
       "notes": "简单任务、分类、高并发场景的低价选择。",
-      "source": "Anthropic 官方定价（2026-06 缓存）",
-      "verified": true
+      "source": "Anthropic 官方定价页（2026-07-08 自动抓取）",
+      "verified": true,
+      "verifiedAt": "2026-07-08T09:10:22.305Z",
+      "verificationSource": "Anthropic 官方定价页"
     },
     {
       "id": "gpt-5.5",
@@ -209,8 +235,10 @@
         "旗舰"
       ],
       "notes": "OpenAI 当前旗舰。官方定价页未标注上下文长度（第三方称 1M，未核实）。",
-      "source": "developers.openai.com/api/docs/pricing（2026-07-07 抓取）",
-      "verified": true
+      "source": "OpenAI 官方定价页（2026-07-08 自动抓取）",
+      "verified": true,
+      "verifiedAt": "2026-07-08T09:10:22.076Z",
+      "verificationSource": "OpenAI 官方定价页"
     },
     {
       "id": "gpt-5.4",
@@ -235,8 +263,10 @@
         "性价比"
       ],
       "notes": "中端主力，价格为 GPT-5.5 的一半。上下文长度未核实。",
-      "source": "developers.openai.com/api/docs/pricing（2026-07-07 抓取）",
-      "verified": true
+      "source": "OpenAI 官方定价页（2026-07-08 自动抓取）",
+      "verified": true,
+      "verifiedAt": "2026-07-08T09:10:22.076Z",
+      "verificationSource": "OpenAI 官方定价页"
     },
     {
       "id": "gpt-5.4-mini",
@@ -245,7 +275,7 @@
       "currency": "USD",
       "inputPrice": 0.75,
       "outputPrice": 4.5,
-      "cachedInputPrice": null,
+      "cachedInputPrice": 0.075,
       "contextWindow": null,
       "maxOutput": null,
       "vision": true,
@@ -261,8 +291,10 @@
         "低成本"
       ],
       "notes": "日常任务的低价选择。上下文长度未核实。",
-      "source": "developers.openai.com/api/docs/pricing（2026-07-07 抓取）",
-      "verified": true
+      "source": "OpenAI 官方定价页（2026-07-08 自动抓取）",
+      "verified": true,
+      "verifiedAt": "2026-07-08T09:10:22.076Z",
+      "verificationSource": "OpenAI 官方定价页"
     },
     {
       "id": "gpt-5.4-nano",
@@ -271,7 +303,7 @@
       "currency": "USD",
       "inputPrice": 0.2,
       "outputPrice": 1.25,
-      "cachedInputPrice": null,
+      "cachedInputPrice": 0.02,
       "contextWindow": null,
       "maxOutput": null,
       "vision": true,
@@ -288,8 +320,10 @@
         "快速"
       ],
       "notes": "分类、抽取等轻量任务。上下文长度未核实。",
-      "source": "developers.openai.com/api/docs/pricing（2026-07-07 抓取）",
-      "verified": true
+      "source": "OpenAI 官方定价页（2026-07-08 自动抓取）",
+      "verified": true,
+      "verifiedAt": "2026-07-08T09:10:22.076Z",
+      "verificationSource": "OpenAI 官方定价页"
     },
     {
       "id": "gpt-5.3-codex",
@@ -298,7 +332,7 @@
       "currency": "USD",
       "inputPrice": 1.75,
       "outputPrice": 14,
-      "cachedInputPrice": null,
+      "cachedInputPrice": 0.175,
       "contextWindow": null,
       "maxOutput": null,
       "vision": null,
@@ -315,8 +349,10 @@
         "专用"
       ],
       "notes": "编码专用模型。是否支持图片未核实。",
-      "source": "developers.openai.com/api/docs/pricing（2026-07-07 抓取）",
-      "verified": true
+      "source": "OpenAI 官方定价页（2026-07-08 自动抓取）",
+      "verified": true,
+      "verifiedAt": "2026-07-08T09:10:22.076Z",
+      "verificationSource": "OpenAI 官方定价页"
     },
     {
       "id": "gemini-3.1-pro-preview",
@@ -325,7 +361,7 @@
       "currency": "USD",
       "inputPrice": 2,
       "outputPrice": 12,
-      "cachedInputPrice": null,
+      "cachedInputPrice": 0.2,
       "contextWindow": null,
       "maxOutput": null,
       "vision": true,
@@ -343,8 +379,10 @@
         "多模态"
       ],
       "notes": "分级计价：≤200K 为 $2/$12，>200K 为 $4/$18（说明上下文超 200K，总长度未官方标注）。",
-      "source": "ai.google.dev/gemini-api/docs/pricing（2026-07-07 抓取）",
-      "verified": true
+      "source": "Google Gemini 官方定价页（2026-07-08 自动抓取）",
+      "verified": true,
+      "verifiedAt": "2026-07-08T09:10:22.369Z",
+      "verificationSource": "Google Gemini 官方定价页"
     },
     {
       "id": "gemini-3.5-flash",
@@ -353,7 +391,7 @@
       "currency": "USD",
       "inputPrice": 1.5,
       "outputPrice": 9,
-      "cachedInputPrice": null,
+      "cachedInputPrice": 0.15,
       "contextWindow": null,
       "maxOutput": null,
       "vision": true,
@@ -370,8 +408,10 @@
         "多模态"
       ],
       "notes": "Gemini 3 系最新 Flash。上下文长度未核实。",
-      "source": "ai.google.dev/gemini-api/docs/pricing（2026-07-07 抓取）",
-      "verified": true
+      "source": "Google Gemini 官方定价页（2026-07-08 自动抓取）",
+      "verified": true,
+      "verifiedAt": "2026-07-08T09:10:22.369Z",
+      "verificationSource": "Google Gemini 官方定价页"
     },
     {
       "id": "gemini-3-flash-preview",
@@ -380,7 +420,7 @@
       "currency": "USD",
       "inputPrice": 0.5,
       "outputPrice": 3,
-      "cachedInputPrice": null,
+      "cachedInputPrice": 0.05,
       "contextWindow": null,
       "maxOutput": null,
       "vision": true,
@@ -397,8 +437,10 @@
         "多模态"
       ],
       "notes": "上下文长度未核实。",
-      "source": "ai.google.dev/gemini-api/docs/pricing（2026-07-07 抓取）",
-      "verified": true
+      "source": "Google Gemini 官方定价页（2026-07-08 自动抓取）",
+      "verified": true,
+      "verifiedAt": "2026-07-08T09:10:22.369Z",
+      "verificationSource": "Google Gemini 官方定价页"
     },
     {
       "id": "gemini-2.5-pro",
@@ -407,7 +449,7 @@
       "currency": "USD",
       "inputPrice": 1.25,
       "outputPrice": 10,
-      "cachedInputPrice": null,
+      "cachedInputPrice": 0.125,
       "contextWindow": 1000000,
       "maxOutput": 65536,
       "vision": true,
@@ -424,8 +466,10 @@
         "多模态"
       ],
       "notes": "分级计价：>200K 输入 $2.50 / 输出 $15。1M 上下文，长文档性价比高。",
-      "source": "ai.google.dev/gemini-api/docs/pricing（2026-07-07 抓取）",
-      "verified": true
+      "source": "Google Gemini 官方定价页（2026-07-08 自动抓取）",
+      "verified": true,
+      "verifiedAt": "2026-07-08T09:10:22.369Z",
+      "verificationSource": "Google Gemini 官方定价页"
     },
     {
       "id": "gemini-2.5-flash",
@@ -434,7 +478,7 @@
       "currency": "USD",
       "inputPrice": 0.3,
       "outputPrice": 2.5,
-      "cachedInputPrice": null,
+      "cachedInputPrice": 0.03,
       "contextWindow": 1000000,
       "maxOutput": 65536,
       "vision": true,
@@ -452,8 +496,10 @@
         "多模态"
       ],
       "notes": "1M 上下文 + 极低价格，长文档批量处理利器。",
-      "source": "ai.google.dev/gemini-api/docs/pricing（2026-07-07 抓取）",
-      "verified": true
+      "source": "Google Gemini 官方定价页（2026-07-08 自动抓取）",
+      "verified": true,
+      "verifiedAt": "2026-07-08T09:10:22.369Z",
+      "verificationSource": "Google Gemini 官方定价页"
     },
     {
       "id": "gemini-2.5-flash-lite",
@@ -462,7 +508,7 @@
       "currency": "USD",
       "inputPrice": 0.1,
       "outputPrice": 0.4,
-      "cachedInputPrice": null,
+      "cachedInputPrice": 0.01,
       "contextWindow": 1000000,
       "maxOutput": 65536,
       "vision": true,
@@ -479,8 +525,10 @@
         "长上下文"
       ],
       "notes": "最便宜的 1M 上下文模型之一。",
-      "source": "ai.google.dev/gemini-api/docs/pricing（2026-07-07 抓取）",
-      "verified": true
+      "source": "Google Gemini 官方定价页（2026-07-08 自动抓取）",
+      "verified": true,
+      "verifiedAt": "2026-07-08T09:10:22.369Z",
+      "verificationSource": "Google Gemini 官方定价页"
     },
     {
       "id": "deepseek-v4-pro",
@@ -508,8 +556,10 @@
         "长上下文"
       ],
       "notes": "编码/推理能力强且价格极低；缓存命中输入近乎免费。是否支持图片未核实。",
-      "source": "api-docs.deepseek.com/quick_start/pricing（2026-07-07 抓取）",
-      "verified": true
+      "source": "DeepSeek 官方定价页（2026-07-08 自动抓取）",
+      "verified": true,
+      "verifiedAt": "2026-07-08T09:10:22.068Z",
+      "verificationSource": "DeepSeek 官方定价页"
     },
     {
       "id": "deepseek-v4-flash",
@@ -536,8 +586,10 @@
         "长上下文"
       ],
       "notes": "1M 上下文 + 白菜价，中文日常与批量任务首选之一。是否支持图片未核实。",
-      "source": "api-docs.deepseek.com/quick_start/pricing（2026-07-07 抓取）",
-      "verified": true
+      "source": "DeepSeek 官方定价页（2026-07-08 自动抓取）",
+      "verified": true,
+      "verifiedAt": "2026-07-08T09:10:22.068Z",
+      "verificationSource": "DeepSeek 官方定价页"
     },
     {
       "id": "qwen3-max",
@@ -564,7 +616,9 @@
       ],
       "notes": "阿里旗舰。按输入长度分级计价，此处为最低档（≤32K）价格；不同来源报价不一致，以 Model Studio 控制台为准。视觉任务需用 Qwen3-VL 系列。",
       "source": "OpenRouter Models API（第三方转发价）（2026-07-08 自动抓取）",
-      "verified": false
+      "verified": false,
+      "verifiedAt": null,
+      "verificationSource": null
     },
     {
       "id": "qwen3-coder-plus",
@@ -591,7 +645,9 @@
       ],
       "notes": "阿里编码专用模型。当前价格未能核实（unknown），请查阿里云 Model Studio。",
       "source": "OpenRouter Models API（第三方转发价）（2026-07-08 自动抓取）",
-      "verified": false
+      "verified": false,
+      "verifiedAt": null,
+      "verificationSource": null
     },
     {
       "id": "kimi-k2.6",
@@ -618,7 +674,9 @@
       ],
       "notes": "Moonshot 最新旗舰（2026-04），Agent/工具调用表现好。价格来自第三方汇总，未从官方页直接核实。",
       "source": "OpenRouter Models API（第三方转发价）（2026-07-08 自动抓取）",
-      "verified": false
+      "verified": false,
+      "verifiedAt": null,
+      "verificationSource": null
     },
     {
       "id": "kimi-k2.5",
@@ -645,7 +703,9 @@
       ],
       "notes": "价格来自第三方汇总，未从官方页直接核实；上下文长度 unknown。",
       "source": "OpenRouter Models API（第三方转发价）（2026-07-08 自动抓取）",
-      "verified": false
+      "verified": false,
+      "verifiedAt": null,
+      "verificationSource": null
     },
     {
       "id": "doubao-2.1-pro",
@@ -672,7 +732,9 @@
       ],
       "notes": "字节最新旗舰（人民币计价：¥6 / ¥30 每百万 token）。上下文长度与多模态支持未核实。",
       "source": "火山引擎公开报道（2026-06），未从官方定价页直接核实",
-      "verified": false
+      "verified": false,
+      "verifiedAt": null,
+      "verificationSource": null
     },
     {
       "id": "doubao-seed-2.0-pro",
@@ -699,7 +761,9 @@
       ],
       "notes": "人民币计价：¥3.2 / ¥16 每百万 token。上下文长度未核实。",
       "source": "第三方评测汇总（2026-06），未从官方定价页直接核实",
-      "verified": false
+      "verified": false,
+      "verifiedAt": null,
+      "verificationSource": null
     },
     {
       "id": "openrouter-deepseek-r1-free",
@@ -727,7 +791,9 @@
       ],
       "notes": "OpenRouter 免费池（:free 后缀），限速约 20 req/min、200 req/day；免费端点是否支持工具调用视上游而定。",
       "source": "openrouter.ai（2026-07 搜索结果）",
-      "verified": false
+      "verified": false,
+      "verifiedAt": null,
+      "verificationSource": null
     },
     {
       "id": "openrouter-llama-3.3-70b-free",
@@ -754,7 +820,9 @@
       ],
       "notes": "OpenRouter 免费池，限速同上。OpenRouter 付费模型为原价转发 + 充值时 5.5% 手续费。",
       "source": "OpenRouter Models API（第三方转发价）（2026-07-08 自动抓取）",
-      "verified": false
+      "verified": false,
+      "verifiedAt": null,
+      "verificationSource": null
     }
   ]
 }

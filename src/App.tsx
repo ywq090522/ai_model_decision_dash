@@ -46,6 +46,15 @@ export default function App() {
     return { verified, free, unknownPrice };
   }, []);
 
+  // 数据源新鲜度（来自管线写入的 meta.pipeline，不硬编码）
+  const sourceStats = useMemo(() => {
+    const sources = data.meta.pipeline?.sources ?? [];
+    const ok = sources.filter((s) => s.status === "ok");
+    const stale = sources.filter((s) => s.status === "stale" || s.status === "error");
+    const staleProviders = new Set(stale.flatMap((s) => s.providers ?? []));
+    return { total: sources.length, ok: ok.length, stale, staleProviders };
+  }, []);
+
   return (
     <div className="mx-auto max-w-6xl px-4 pb-20 pt-8">
       {/* 页头 */}
@@ -62,11 +71,30 @@ export default function App() {
               主流大模型价格 / 上下文 / 能力对照表，配成本计算器与场景推荐。
               查不到的数据一律标 <i className="text-muted">unknown</i>，绝不编造。
             </p>
+            {sourceStats.stale.length > 0 && (
+              <p className="mt-1.5 max-w-2xl text-xs text-warn">
+                ⚠ {sourceStats.stale.length} 个数据源 stale（
+                {sourceStats.stale.map((s) => s.source).join("、")}
+                ），相关模型显示的是历史 / 兜底数据。
+              </p>
+            )}
           </div>
           <dl className="flex gap-6 text-right">
             <Stat label="收录模型" value={String(data.models.length)} />
             <Stat label="官方核实价" value={String(stats.verified)} />
-            <Stat label="免费模型" value={String(stats.free)} />
+            {sourceStats.total > 0 && (
+              <Stat
+                label="数据源"
+                value={`${sourceStats.ok}/${sourceStats.total} 正常`}
+                small
+                warn={sourceStats.stale.length > 0}
+                title={
+                  sourceStats.stale.length > 0
+                    ? `stale：${sourceStats.stale.map((s) => s.source).join("、")}`
+                    : "全部数据源本次抓取正常"
+                }
+              />
+            )}
             <Stat label="数据更新" value={data.meta.updatedAt} small />
           </dl>
         </div>
@@ -87,7 +115,11 @@ export default function App() {
             matched={filtered.length}
             total={data.models.length}
           />
-          <ModelTable models={filtered} cnyPerUsd={cnyPerUsd} />
+          <ModelTable
+            models={filtered}
+            cnyPerUsd={cnyPerUsd}
+            staleProviders={sourceStats.staleProviders}
+          />
         </div>
       </Section>
 
@@ -146,11 +178,25 @@ export default function App() {
   );
 }
 
-function Stat({ label, value, small }: { label: string; value: string; small?: boolean }) {
+function Stat({
+  label,
+  value,
+  small,
+  warn,
+  title,
+}: {
+  label: string;
+  value: string;
+  small?: boolean;
+  warn?: boolean;
+  title?: string;
+}) {
   return (
-    <div>
+    <div title={title}>
       <dt className="text-[10px] uppercase tracking-wider text-muted">{label}</dt>
-      <dd className={`num font-semibold ${small ? "text-sm" : "text-2xl"}`}>{value}</dd>
+      <dd className={`num font-semibold ${small ? "text-sm" : "text-2xl"} ${warn ? "text-warn" : ""}`}>
+        {value}
+      </dd>
     </div>
   );
 }

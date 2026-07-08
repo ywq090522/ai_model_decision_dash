@@ -37,7 +37,10 @@ jobs:
           BASE_PATH: /${{ github.event.repository.name }}/
         run: npm run build
 
-      # 前端不应包含任何后端 provider 配置、环境变量名或密钥值。
+      # 统一泄漏自检：dist + models.json + reports（密钥值格式、真实 secret 值、未脱敏环境变量名）
+      - run: npm run check:leaks
+
+      # 前端不应包含任何后端 provider 配置、环境变量名或密钥值（含网关 URL，双保险保留）。
       - name: Assert no secrets in bundle
         run: |
           if grep -rE "ANTHROPIC_API_KEY|DEEPSEEK_API_KEY|MOONSHOT_API_KEY|ZHIPU_API_KEY|api\.anthropic\.com|api\.deepseek\.com/anthropic|api\.moonshot\.cn/anthropic|open\.bigmodel\.cn/api/anthropic" dist/; then

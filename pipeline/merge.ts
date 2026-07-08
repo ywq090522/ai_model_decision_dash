@@ -32,7 +32,15 @@ export function normalizeId(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9.]/g, "");
 }
 
-function matchKeys(m: { id: string; name: string; aliases: string[] }): Set<string> {
+/**
+ * models.json 会整体打进前端 bundle：写入 meta.pipeline 的 detail 里不能出现
+ * 密钥环境变量名（deploy 的泄漏自检会拦截整个部署）。完整 detail 保留在 reports/ 里。
+ */
+export function publicDetail(detail: string): string {
+  return detail.replace(/\b[A-Z][A-Z0-9_]*_(?:API_KEY|TOKEN|SECRET)\b/g, "［密钥环境变量］");
+}
+
+export function matchKeys(m: { id: string; name: string; aliases: string[] }): Set<string> {
   return new Set([normalizeId(m.id), normalizeId(m.name), ...m.aliases.map(normalizeId)]);
 }
 
@@ -78,7 +86,11 @@ export function mergeData(
       contextWindow: prev?.contextWindow ?? c.fallback.contextWindow,
       maxOutput: prev?.maxOutput ?? c.fallback.maxOutput,
       source: prev?.source ?? c.fallback.source,
-      verified: prev?.verified ?? c.fallback.verified,
+      // verified 只能来自真实管线核实（verifiedAt 为证）；seed/兜底数据一律 false。
+      // 旧版 models.json 里 verified=true 但无 verifiedAt 的条目（seed 伪装）在此归零。
+      verified: prev?.verifiedAt != null ? prev.verified : false,
+      verifiedAt: prev?.verifiedAt ?? null,
+      verificationSource: prev?.verificationSource ?? null,
     };
 
     const src = providerSource.get(c.provider);
@@ -101,7 +113,16 @@ export function mergeData(
     }
     if (confirmedByCurrentSource) {
       base.source = `${src.def.label}（${runDate} 自动抓取）`;
-      base.verified = src.def.verified;
+      if (src.def.verified) {
+        base.verified = true;
+        base.verifiedAt = src.fetchedAt ?? runDate;
+        base.verificationSource = src.def.label;
+      } else {
+        // 第三方源（OpenRouter）确认的数据不算官方核实
+        base.verified = false;
+        base.verifiedAt = null;
+        base.verificationSource = null;
+      }
     }
     if (updated.length > 0) fieldUpdates.set(c.id, updated);
     return base;
@@ -122,13 +143,15 @@ export function mergeData(
       source: r.def.label,
       status: r.status === "ok" ? ("ok" as const) : ("stale" as const),
       fetchedAt: r.fetchedAt,
-      ...(r.detail ? { detail: r.detail } : {}),
+      ...(r.detail ? { detail: publicDetail(r.detail) } : {}),
+      providers: r.def.providers,
     })),
     ...manualProviders.map((p) => ({
       source: p,
       status: "manual" as const,
       fetchedAt: null,
       detail: "无自动源（JS 渲染/登录墙），沿用 curated 值",
+      providers: [p],
     })),
   ];
 

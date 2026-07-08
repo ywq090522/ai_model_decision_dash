@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mergeData, normalizeId, type SourceResult } from "./merge";
+import { mergeData, normalizeId, publicDetail, type SourceResult } from "./merge";
 import type { CuratedData, ModelData } from "../src/types";
 import type { SourceDef } from "./sources";
 
@@ -29,7 +29,6 @@ const curated: CuratedData = {
         contextWindow: null,
         maxOutput: null,
         source: "手工",
-        verified: false,
       },
     },
     {
@@ -50,7 +49,6 @@ const curated: CuratedData = {
         contextWindow: null,
         maxOutput: null,
         source: "手工",
-        verified: false,
       },
     },
   ],
@@ -73,6 +71,30 @@ describe("normalizeId", () => {
   it("大小写/连字符/斜杠归一", () => {
     expect(normalizeId("GPT Test")).toBe(normalizeId("gpt-test"));
     expect(normalizeId("moonshotai/kimi-k2.5")).toBe("moonshotaikimik2.5");
+  });
+});
+
+describe("publicDetail", () => {
+  it("剥掉密钥环境变量名（models.json 进前端 bundle，deploy 泄漏自检会拦）", () => {
+    expect(publicDetail("请设置环境变量 ANTHROPIC_API_KEY（本地可写入 .env）")).not.toContain(
+      "ANTHROPIC_API_KEY",
+    );
+    expect(publicDetail("缺 GATEWAY_AUTH_TOKEN")).not.toContain("GATEWAY_AUTH_TOKEN");
+    expect(publicDetail("HTTP 500")).toBe("HTTP 500");
+  });
+
+  it("mergeData 写入的源状态 detail 已净化", () => {
+    const failed: SourceResult = {
+      def: openaiDef,
+      status: "error",
+      fetchedAt: null,
+      detail: 'provider "anthropic" 未配置密钥：请设置环境变量 ANTHROPIC_API_KEY',
+      extracted: [],
+      flags: [],
+    };
+    const out = mergeData(curated, null, [failed], [], "2026-07-07");
+    const s = out.data.meta.pipeline!.sources.find((x) => x.source.includes("OpenAI"))!;
+    expect(s.detail).not.toContain("ANTHROPIC_API_KEY");
   });
 });
 
@@ -101,6 +123,8 @@ describe("mergeData", () => {
     expect(m.outputPrice).toBe(15.0);
     expect(m.contextWindow).toBe(400_000);
     expect(m.verified).toBe(true);
+    expect(m.verifiedAt).toBe("2026-07-07T00:00:00Z"); // 官方源抓取时间
+    expect(m.verificationSource).toBe("OpenAI 官方定价页");
     expect(m.source).toContain("OpenAI 官方定价页");
     expect(m.scores.coding).toBe(3); // 人工字段不被覆盖
     expect(out.fieldUpdates.get("gpt-test")).toEqual([
@@ -138,6 +162,8 @@ describe("mergeData", () => {
           notes: "",
           source: "旧源",
           verified: true,
+          verifiedAt: "2026-06-01T00:00:00Z",
+          verificationSource: "OpenAI 官方定价页",
         },
       ],
     };
@@ -165,6 +191,7 @@ describe("mergeData", () => {
     expect(m.contextWindow).toBe(400_000);
     expect(m.source).toContain("OpenAI 官方定价页");
     expect(m.verified).toBe(true);
+    expect(m.verifiedAt).toBe("2026-07-07T00:00:00Z"); // 本次核实时间刷新
   });
 
   it("命中模型但所有事实字段都是 null 时，不更新 source/verified", () => {
@@ -195,6 +222,8 @@ describe("mergeData", () => {
           notes: "",
           source: "旧源",
           verified: false,
+          verifiedAt: null,
+          verificationSource: null,
         },
       ],
     };
@@ -248,6 +277,7 @@ describe("mergeData", () => {
     expect(m.outputPrice).toBe(12.0);
     expect(m.source).toContain("OpenAI 官方定价页");
     expect(m.verified).toBe(true);
+    expect(m.verifiedAt).not.toBeNull();
     expect(out.fieldUpdates.get("gpt-test")).toEqual(["outputPrice"]);
   });
 
@@ -264,9 +294,111 @@ describe("mergeData", () => {
     const m = out.data.models.find((x) => x.id === "gpt-test")!;
     expect(m.inputPrice).toBe(2.0); // fallback 值
     expect(m.source).toBe("手工");
+    expect(m.verified).toBe(false); // 兜底数据绝不 verified
+    expect(m.verifiedAt).toBeNull();
     const statuses = out.data.meta.pipeline!.sources;
-    expect(statuses.find((s) => s.source.includes("OpenAI"))!.status).toBe("stale");
+    const openaiStatus = statuses.find((s) => s.source.includes("OpenAI"))!;
+    expect(openaiStatus.status).toBe("stale");
+    expect(openaiStatus.providers).toEqual(["OpenAI"]); // UI 据此给模型打 stale 角标
     expect(statuses.find((s) => s.source.includes("豆包"))!.status).toBe("manual");
+  });
+
+  it("seed/fallback 数据不能伪装 verified：首次生成（无 previous）且源失败时全部 verified=false", () => {
+    const failed: SourceResult = {
+      def: openaiDef,
+      status: "error",
+      fetchedAt: null,
+      detail: "HTTP 500",
+      extracted: [],
+      flags: [],
+    };
+    const out = mergeData(curated, null, [failed], ["豆包 (火山引擎)"], "2026-07-07");
+    for (const m of out.data.models) {
+      expect(m.verified).toBe(false);
+      expect(m.verifiedAt).toBeNull();
+      expect(m.verificationSource).toBeNull();
+    }
+  });
+
+  it("旧版数据 verified=true 但无 verifiedAt（seed 伪装）→ 迁移时归零", () => {
+    const previous: ModelData = {
+      meta: {
+        updatedAt: "2026-06-01",
+        priceUnit: "u",
+        defaultCnyPerUsd: 7.2,
+        cnyRateNote: "n",
+        scoreNote: "n",
+        unknownNote: "n",
+      },
+      models: [
+        {
+          id: "gpt-test",
+          name: "GPT Test",
+          provider: "OpenAI",
+          currency: "USD",
+          inputPrice: 2.0,
+          outputPrice: 10.0,
+          cachedInputPrice: null,
+          contextWindow: null,
+          maxOutput: null,
+          vision: true,
+          toolUse: true,
+          scores: { coding: 3, longDoc: 3, chat: 3, agent: 3, chinese: 3 },
+          tags: [],
+          notes: "",
+          source: "Anthropic 官方定价（2026-06 缓存）",
+          verified: true, // 旧格式 seed 伪装
+          verifiedAt: null,
+          verificationSource: null,
+        },
+      ],
+    };
+    const failed: SourceResult = {
+      def: openaiDef,
+      status: "error",
+      fetchedAt: null,
+      detail: "HTTP 500",
+      extracted: [],
+      flags: [],
+    };
+    const out = mergeData(curated, previous, [failed], [], "2026-07-07");
+    const m = out.data.models.find((x) => x.id === "gpt-test")!;
+    expect(m.inputPrice).toBe(2.0); // 事实字段保留
+    expect(m.verified).toBe(false); // 但 verified 伪装被剥掉
+    expect(m.verifiedAt).toBeNull();
+  });
+
+  it("第三方源（def.verified=false）确认的数据不算官方核实", () => {
+    const thirdPartyDef: SourceDef = { ...openaiDef, verified: false };
+    const out = mergeData(
+      curated,
+      null,
+      [
+        {
+          def: thirdPartyDef,
+          status: "ok",
+          fetchedAt: "2026-07-07T00:00:00Z",
+          extracted: [
+            {
+              modelId: "gpt-test",
+              inputPrice: 2.5,
+              outputPrice: 15.0,
+              cachedInputPrice: null,
+              contextWindow: null,
+              maxOutput: null,
+            },
+          ],
+          flags: [],
+        },
+      ],
+      [],
+      "2026-07-07",
+    );
+    const m = out.data.models.find((x) => x.id === "gpt-test")!;
+    expect(m.inputPrice).toBe(2.5); // 事实字段更新
+    expect(m.verified).toBe(false); // 但不算官方核实
+    expect(m.verifiedAt).toBeNull();
+    expect(m.verificationSource).toBeNull();
   });
 
   it("官方页出现但 curated 未收录的模型进候选清单，不自动入库", () => {

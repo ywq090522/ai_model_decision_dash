@@ -14,6 +14,7 @@ export default {
         "accent-deep": "#1c5cab",
         "accent-wash": "#e8f1fc",
         good: "#0ca30c",
+        warn: "#a16207",
         critical: "#d03b3b",
       },
       fontFamily: {

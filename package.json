@@ -11,6 +11,8 @@
     "typecheck": "tsc -b && tsc -p tsconfig.pipeline.json",
     "pipeline": "tsx pipeline/index.ts",
     "pipeline:dry": "tsx pipeline/index.ts --dry-run",
+    "data:smoke": "tsx pipeline/smoke.ts",
+    "check:leaks": "node scripts/check-leaks.mjs",
     "gateway": "tsx gateway/server.ts"
   },
   "dependencies": {

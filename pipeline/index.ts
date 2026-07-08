@@ -4,49 +4,49 @@
  * 用法：
  *   npm run pipeline           # 抓取并写入 src/data/models.json + reports/YYYY-MM-DD.md
  *   npm run pipeline:dry       # 只打印报告，不写文件
+ *   npm run data:smoke         # 真实环境验收（不写 models.json），见 pipeline/smoke.ts
  *
- * 退出码：0 = 正常；1 = 硬错误（Zod 校验失败等，未写入）；2 = 有异常，已写入但需人工审（CI 转 PR）。
+ * 退出码：0 = 正常；1 = 硬错误（缺解析密钥 / Zod 校验失败等，未写入）；
+ *        2 = 有异常，已写入但需人工审（CI 转 PR）；3 = 所有官方源 stale/failed（已写入，CI 不提交）。
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { CuratedDataSchema, ModelDataSchema } from "../src/data/schema";
 import type { ModelData } from "../src/types";
-import { fetchText, htmlToText, saveSnapshot } from "./fetch";
 import { MANUAL_PROVIDERS, SOURCES } from "./sources";
-import { parseOpenRouter, parseWithLLM } from "./parse";
-import { verifyExtraction } from "./verify";
-import { mergeData, type SourceResult } from "./merge";
+import { mergeData } from "./merge";
 import { buildReport } from "./report";
+import { loadDotEnv, redactSecrets, runSource } from "./run-source";
+import { DEFAULT_PARSER_MODEL } from "./parse";
+import { resolveParserTarget } from "../gateway/parse-client";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const MODELS_PATH = join(ROOT, "src/data/models.json");
 const CURATED_PATH = join(ROOT, "src/data/curated.json");
 const REPORTS_DIR = join(ROOT, "reports");
 
-async function runSource(def: (typeof SOURCES)[number]): Promise<SourceResult> {
+/** 官方源需要 LLM 解析：解析模型的密钥缺失时立即失败，绝不静默产出全 stale 数据 */
+function assertParserAvailable(): void {
+  const modelId = process.env.PARSER_MODEL ?? DEFAULT_PARSER_MODEL;
   try {
-    const raw = await fetchText(def.url);
-    const fetchedAt = new Date().toISOString();
-    if (def.kind === "openrouter-api") {
-      saveSnapshot(def.key, raw);
-      return { def, status: "ok", fetchedAt, extracted: parseOpenRouter(raw), flags: [] };
-    }
-    const text = htmlToText(raw);
-    saveSnapshot(def.key, text);
-    const extracted = await parseWithLLM(text);
-    const { models, flags } = verifyExtraction(text, extracted);
-    return { def, status: "ok", fetchedAt, extracted: models, flags };
+    resolveParserTarget(modelId);
   } catch (e) {
-    const detail = e instanceof Error ? e.message : String(e);
-    console.error(`[${def.key}] 抓取/解析失败，保留旧值：${detail}`);
-    return { def, status: "error", fetchedAt: null, detail, extracted: [], flags: [] };
+    const detail = redactSecrets(e instanceof Error ? e.message : String(e));
+    console.error(`管线中止：解析模型 "${modelId}" 不可用 —— ${detail}`);
+    console.error(
+      "官方定价页需要 LLM 解析。本地：把上面提示的密钥写入 .env 或 export；CI：把对应 Secret 配到 repo Settings → Secrets → Actions（见 README「数据管线」）。",
+    );
+    process.exit(1);
   }
 }
 
 async function main() {
+  loadDotEnv();
   const dryRun = process.argv.includes("--dry-run");
   const runDate = new Date().toISOString().slice(0, 10);
+
+  if (SOURCES.some((s) => s.kind === "llm")) assertParserAvailable();
 
   const curated = CuratedDataSchema.parse(JSON.parse(readFileSync(CURATED_PATH, "utf8")));
   const previous: ModelData | null = existsSync(MODELS_PATH)
@@ -56,9 +56,11 @@ async function main() {
   console.log(`抓取 ${SOURCES.length} 个源…`);
   const results = await Promise.all(SOURCES.map(runSource));
   for (const r of results) {
-    console.log(
-      `  [${r.def.key}] ${r.status}${r.status === "ok" ? `，提取 ${r.extracted.length} 条，回查拦截 ${r.flags.length} 处` : ""}`,
-    );
+    if (r.status === "ok") {
+      console.log(`  [${r.def.key}] ok，提取 ${r.extracted.length} 条，回查拦截 ${r.flags.length} 处`);
+    } else {
+      console.error(`  [${r.def.key}] 抓取/解析失败，保留旧值：${r.detail}`);
+    }
   }
 
   const merged = mergeData(curated, previous, results, MANUAL_PROVIDERS, runDate);
@@ -87,9 +89,16 @@ async function main() {
     console.error(`\n检测到 ${report.anomalies.length} 项异常，本次更新需人工审核（exit 2）。`);
     process.exit(2);
   }
+
+  // 官方源全军覆没 = 本次运行没有产出任何官方核实数据，必须显式失败（CI 不提交）
+  const officialSources = results.filter((r) => r.def.verified);
+  if (officialSources.length > 0 && officialSources.every((r) => r.status !== "ok")) {
+    console.error("\n所有官方源均 stale/failed，本次运行没有产出任何官方核实数据（exit 3）。");
+    process.exit(3);
+  }
 }
 
 main().catch((e) => {
-  console.error("管线失败：", e);
+  console.error("管线失败：", redactSecrets(e instanceof Error ? (e.stack ?? e.message) : String(e)));
   process.exit(1);
 });

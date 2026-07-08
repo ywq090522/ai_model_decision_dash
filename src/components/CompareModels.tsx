@@ -1,16 +1,12 @@
 import { useState, type ReactNode } from "react";
-import type { ModelInfo, Registry } from "../types";
-import registryJson from "../data/registry.json";
+import type { ModelInfo } from "../types";
+import { MODEL_PROTOCOLS } from "../data/protocols";
 import { formatPrice, formatTokens } from "../lib/cost";
 import { TriState, UnknownMark } from "./ui";
 
-const registry = registryJson as Registry;
-
-/** 模型 id → 网关 registry 里的 API 协议；未接入网关返回 null */
+/** 模型 id → 网关 API 协议；未接入网关返回 null（不能 import registry.json，见 protocols.ts） */
 function apiProtocol(modelId: string): string | null {
-  const route = registry.models.find((m) => m.id === modelId);
-  if (!route) return null;
-  return registry.providers.find((p) => p.key === route.provider)?.protocol ?? null;
+  return MODEL_PROTOCOLS[modelId] ?? null;
 }
 
 function PriceValue({ price, currency }: { price: number | null; currency: "USD" | "CNY" }) {

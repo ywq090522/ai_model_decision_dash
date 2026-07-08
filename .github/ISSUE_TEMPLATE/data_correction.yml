@@ -1,0 +1,64 @@
+name: "📊 Data correction"
+description: 模型价格 / 上下文 / 能力等数据有误，提交纠错
+title: "[Data] "
+labels: ["data"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        本项目遵循「数据诚实性原则」：所有事实数据要求可溯源。请务必附上**官方定价页或权威来源链接**，无来源的纠错难以采纳。
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Provider（厂商）
+      options:
+        - OpenAI
+        - Anthropic
+        - Google
+        - DeepSeek
+        - Qwen
+        - Kimi (Moonshot)
+        - 豆包 (Doubao)
+        - OpenRouter
+        - 其他（请在备注中说明）
+    validations:
+      required: true
+  - type: input
+    id: model-name
+    attributes:
+      label: 模型名称
+      description: 页面对照表中显示的模型名
+      placeholder: 例如：Claude Sonnet 5
+    validations:
+      required: true
+  - type: textarea
+    id: current-data
+    attributes:
+      label: 当前页面显示的数据
+      description: 照抄页面上的错误数据（哪个字段、显示什么）
+      placeholder: 例如：输入价 $3 / 1M tokens，上下文 200K
+    validations:
+      required: true
+  - type: textarea
+    id: correct-data
+    attributes:
+      label: 正确数据
+      description: 应该显示的数值
+      placeholder: 例如：输入价 $2.5 / 1M tokens，上下文 1M
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: 来源链接
+      description: 官方定价页 / 文档链接（优先官方来源）
+      placeholder: https://…
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: 备注
+      description: 其他需要说明的信息（如价格分档、限时优惠、币种等）
+    validations:
+      required: false

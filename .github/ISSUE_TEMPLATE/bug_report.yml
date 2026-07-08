@@ -1,0 +1,43 @@
+name: "🐛 Bug report"
+description: 页面功能异常、显示错误、计算结果不对等问题
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈！如果是**模型数据错误**（价格 / 上下文 / 能力标注不对），请改用「📊 Data correction」模板。
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述
+      description: 发生了什么？预期应该是什么？
+      placeholder: 例如：成本计算器输入 10000 tokens 后横条图不更新
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 尽量按步骤描述，方便定位
+      placeholder: |
+        1. 打开页面
+        2. 点击 …
+        3. 看到 …
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: 环境
+      description: 浏览器 / 操作系统 / 访问方式（GitHub Pages 或本地 dev）
+      placeholder: 例如：Chrome 138 / Windows 11 / GitHub Pages
+    validations:
+      required: false
+  - type: textarea
+    id: extra
+    attributes:
+      label: 补充信息
+      description: 截图、控制台报错等
+    validations:
+      required: false

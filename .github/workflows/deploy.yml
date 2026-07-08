@@ -28,6 +28,8 @@ jobs:
           cache: npm
 
       - run: npm ci
+      # vitest（esbuild 转译）与 build 的 tsc -b 都不覆盖 pipeline/gateway 的类型检查，必须显式跑
+      - run: npm run typecheck
       - run: npx vitest run
 
       - name: Build (base path = /<repo>/)

@@ -1,5 +1,5 @@
-# 最小 CI：PR 和非 main 分支 push 时验证安装 + 测试 + 构建。
-# main 分支已由 deploy.yml 覆盖（同样跑测试+构建），此处排除以免重复执行；
+# 最小 CI：PR 和非 main 分支 push 时验证安装 + 类型检查 + 测试 + 构建。
+# main 分支已由 deploy.yml 覆盖（同样跑类型检查+测试+构建），此处排除以免重复执行；
 # 数据管线异常时开的 data-update-review PR 由本 workflow 验证。
 name: CI
 
@@ -23,5 +23,7 @@ jobs:
           cache: npm
 
       - run: npm ci
+      # vitest（esbuild 转译）与 build 的 tsc -b 都不覆盖 pipeline/gateway 的类型检查，必须显式跑
+      - run: npm run typecheck
       - run: npx vitest run
       - run: npm run build

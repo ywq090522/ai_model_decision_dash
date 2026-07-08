@@ -11,6 +11,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: write # 允许在 commit 后显式 dispatch deploy.yml（见 Trigger Pages deploy 步骤）
 
 concurrency:
   group: update-data
@@ -85,6 +86,15 @@ jobs:
           git commit -m "data: weekly model pricing update $(date -u +%F)" \
             -m "$(head -40 "${{ steps.report.outputs.path }}")"
           git push
+
+      # GITHUB_TOKEN 的 push 不会触发 on: push 的 workflow（GitHub 防递归限制），
+      # 所以上面的 commit 不会自动引发 Pages 部署；workflow_dispatch 是该限制的
+      # 官方例外，这里在成功 push 后显式触发 deploy.yml（复用其构建与密钥自检）。
+      - name: Trigger Pages deploy
+        if: steps.diff.outputs.changed == 'true' && steps.pipeline.outputs.anomaly == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy.yml --ref main
 
       # 异常路径：开 PR 人工审核（LLM 不是事实来源，异常必须过人）
       - name: Open PR for review (anomaly detected)

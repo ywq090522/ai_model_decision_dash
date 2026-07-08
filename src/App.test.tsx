@@ -21,6 +21,16 @@ describe("App 渲染冒烟测试", () => {
     }
   });
 
+  it("双模型对比区块默认渲染前两个模型", () => {
+    expect(html).toContain("双模型对比");
+    expect(html).toContain("模型 A");
+    expect(html).toContain("模型 B");
+    // 默认选中前两个模型，字段名应出现在对比表中
+    expect(html).toContain("上下文窗口");
+    expect(html).toContain("推荐用途");
+    expect(html).toContain("API 协议");
+  });
+
   it("unknown 数据如实展示，不编造", () => {
     // qwen3-coder-plus 价格 unknown，应显示 unknown 标记
     expect(html).toContain("unknown");

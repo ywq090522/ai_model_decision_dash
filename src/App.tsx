@@ -3,6 +3,7 @@ import rawData from "./data/models.json";
 import type { ModelData, ModelInfo } from "./types";
 import { DEFAULT_FILTERS, FilterBar, type Filters } from "./components/FilterBar";
 import { ModelTable } from "./components/ModelTable";
+import { CompareModels } from "./components/CompareModels";
 import { CostCalculator } from "./components/CostCalculator";
 import { Scenarios } from "./components/Scenarios";
 import { Presets } from "./components/Presets";
@@ -90,10 +91,20 @@ export default function App() {
         </div>
       </Section>
 
+      {/* 双模型对比 */}
+      <Section
+        id="versus"
+        eyebrow="02 · Versus"
+        title="双模型对比"
+        desc="任选两个模型逐字段对比。查不到的字段如实标 unknown / Not available。"
+      >
+        <CompareModels models={data.models} updatedAt={data.meta.updatedAt} />
+      </Section>
+
       {/* 成本计算器 */}
       <Section
         id="cost"
-        eyebrow="02 · Estimate"
+        eyebrow="03 · Estimate"
         title="成本计算器"
         desc="输入你的用量，估算各模型总花费（受上方筛选影响；人民币计价模型按可调汇率换算）。"
       >
@@ -107,7 +118,7 @@ export default function App() {
       {/* 预设模式 */}
       <Section
         id="presets"
-        eyebrow="03 · Presets"
+        eyebrow="04 · Presets"
         title="预设模式"
         desc="三套现成的排序策略，每个模型都附带入选理由。"
       >
@@ -117,7 +128,7 @@ export default function App() {
       {/* 场景推荐 */}
       <Section
         id="scenarios"
-        eyebrow="04 · Recommend"
+        eyebrow="05 · Recommend"
         title="按场景推荐"
         desc="选择你的使用场景，查看 Top 5 推荐与理由。"
       >

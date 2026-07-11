@@ -1,13 +1,16 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import rawData from "./data/models.json";
 import type { ModelData, ModelInfo } from "./types";
-import { DEFAULT_FILTERS, FilterBar, type Filters } from "./components/FilterBar";
+import { FilterBar, type Filters } from "./components/FilterBar";
 import { ModelTable } from "./components/ModelTable";
 import { CompareModels } from "./components/CompareModels";
 import { CostCalculator } from "./components/CostCalculator";
 import { Scenarios } from "./components/Scenarios";
 import { Presets } from "./components/Presets";
 import { Section } from "./components/ui";
+import { decodeShareableState, encodeShareableState, type ShareableState } from "./lib/pageState";
+import { availableStorage, loadCostInputs, saveCostInputs, type CostInputs } from "./lib/costStorage";
+import { dataFreshness, sourceSummary } from "./lib/freshness";
 
 const data = rawData as ModelData;
 
@@ -28,14 +31,32 @@ function applyFilters(models: ModelInfo[], f: Filters): ModelInfo[] {
 }
 
 export default function App() {
-  const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
-  const [cnyPerUsd, setCnyPerUsd] = useState(data.meta.defaultCnyPerUsd);
-
   const providers = useMemo(
     () => [...new Set(data.models.map((m) => m.provider))],
     [],
   );
+  const modelIds = useMemo(() => data.models.map((m) => m.id), []);
+  const readPageState = () => decodeShareableState(typeof window === "undefined" ? "" : window.location.search, providers, modelIds);
+  const [pageState, setPageState] = useState<ShareableState>(readPageState);
+  const { filters } = pageState;
+  const defaultCosts: CostInputs = { cnyPerUsd: data.meta.defaultCnyPerUsd, inputTokens: 4000, outputTokens: 1000, requests: 1000 };
+  const [costInputs, setCostInputs] = useState<CostInputs>(() => loadCostInputs(availableStorage(typeof window === "undefined" ? null : window), defaultCosts));
+  const cnyPerUsd = costInputs.cnyPerUsd;
   const filtered = useMemo(() => applyFilters(data.models, filters), [filters]);
+
+  useEffect(() => {
+    const query = encodeShareableState(pageState, modelIds);
+    const next = `${window.location.pathname}${query}${window.location.hash}`;
+    window.history.replaceState(null, "", next);
+  }, [pageState, modelIds]);
+
+  useEffect(() => {
+    const restore = () => setPageState(readPageState());
+    window.addEventListener("popstate", restore);
+    return () => window.removeEventListener("popstate", restore);
+  }, [providers, modelIds]);
+
+  useEffect(() => saveCostInputs(availableStorage(window), costInputs), [costInputs]);
 
   const stats = useMemo(() => {
     const verified = data.models.filter((m) => m.verified).length;
@@ -48,12 +69,11 @@ export default function App() {
 
   // 数据源新鲜度（来自管线写入的 meta.pipeline，不硬编码）
   const sourceStats = useMemo(() => {
-    const sources = data.meta.pipeline?.sources ?? [];
-    const ok = sources.filter((s) => s.status === "ok");
-    const stale = sources.filter((s) => s.status === "stale" || s.status === "error");
+    const { sources, ok, stale, manual } = sourceSummary(data.meta);
     const staleProviders = new Set(stale.flatMap((s) => s.providers ?? []));
-    return { total: sources.length, ok: ok.length, stale, staleProviders };
+    return { total: sources.length, ok: ok.length, stale, manual, staleProviders };
   }, []);
+  const freshness = dataFreshness(data.meta.updatedAt);
 
   return (
     <div className="mx-auto max-w-6xl px-4 pb-20 pt-8">
@@ -78,6 +98,11 @@ export default function App() {
                 ），相关模型显示的是历史 / 兜底数据。
               </p>
             )}
+            {sourceStats.manual.length > 0 && (
+              <p className="mt-1 text-xs text-muted">
+                {sourceStats.manual.length} 个数据源为人工维护；其状态不代表本次自动抓取成功。
+              </p>
+            )}
           </div>
           <dl className="flex gap-6 text-right">
             <Stat label="收录模型" value={String(data.models.length)} />
@@ -95,7 +120,13 @@ export default function App() {
                 }
               />
             )}
-            <Stat label="数据更新" value={data.meta.updatedAt} small />
+            <Stat
+              label="数据更新"
+              value={freshness.daysOld === null ? "未知" : `${data.meta.updatedAt} · ${freshness.label}`}
+              small
+              warn={freshness.stale === true}
+              title={freshness.stale === true ? "数据已超过新鲜度阈值" : undefined}
+            />
           </dl>
         </div>
       </header>
@@ -105,12 +136,12 @@ export default function App() {
         id="table"
         eyebrow="01 · Compare"
         title="模型对照表"
-        desc="点击表头排序（unknown 永远排最后），点击行展开备注与数据来源。价格单位：每百万 tokens。"
+        desc="点击表头排序（unknown 永远排最后），使用模型名称按钮展开备注与数据来源。价格单位：每百万 tokens。"
       >
         <div className="space-y-3">
           <FilterBar
             filters={filters}
-            onChange={setFilters}
+            onChange={(filters) => setPageState((s) => ({ ...s, filters }))}
             providers={providers}
             matched={filtered.length}
             total={data.models.length}
@@ -119,6 +150,8 @@ export default function App() {
             models={filtered}
             cnyPerUsd={cnyPerUsd}
             staleProviders={sourceStats.staleProviders}
+            sort={pageState.sort}
+            onSortChange={(sort) => setPageState((s) => ({ ...s, sort }))}
           />
         </div>
       </Section>
@@ -130,7 +163,7 @@ export default function App() {
         title="双模型对比"
         desc="任选两个模型逐字段对比。查不到的字段如实标 unknown / Not available。"
       >
-        <CompareModels models={data.models} updatedAt={data.meta.updatedAt} />
+        <CompareModels models={data.models} updatedAt={data.meta.updatedAt} value={pageState.compare} onChange={(compare) => setPageState((s) => ({ ...s, compare }))} />
       </Section>
 
       {/* 成本计算器 */}
@@ -143,7 +176,9 @@ export default function App() {
         <CostCalculator
           models={filtered}
           cnyPerUsd={cnyPerUsd}
-          onCnyPerUsdChange={(v) => setCnyPerUsd(v > 0 ? v : cnyPerUsd)}
+          onCnyPerUsdChange={(v) => setCostInputs((s) => ({ ...s, cnyPerUsd: v > 0 ? v : s.cnyPerUsd }))}
+          inputs={costInputs}
+          onInputsChange={(inputs) => setCostInputs((s) => ({ ...s, ...inputs }))}
         />
       </Section>
 
@@ -154,7 +189,7 @@ export default function App() {
         title="预设模式"
         desc="三套现成的排序策略，每个模型都附带入选理由。"
       >
-        <Presets models={data.models} cnyPerUsd={cnyPerUsd} />
+        <Presets models={data.models} cnyPerUsd={cnyPerUsd} active={pageState.preset} onChange={(preset) => setPageState((s) => ({ ...s, preset }))} />
       </Section>
 
       {/* 场景推荐 */}
@@ -164,7 +199,7 @@ export default function App() {
         title="按场景推荐"
         desc="选择你的使用场景，查看 Top 5 推荐与理由。"
       >
-        <Scenarios models={data.models} cnyPerUsd={cnyPerUsd} />
+        <Scenarios models={data.models} cnyPerUsd={cnyPerUsd} active={pageState.scenario} onChange={(scenario) => setPageState((s) => ({ ...s, scenario }))} />
       </Section>
 
       <footer className="mt-12 border-t border-line pt-4 text-[11px] leading-relaxed text-muted">

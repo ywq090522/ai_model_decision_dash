@@ -3,7 +3,7 @@ import type { ModelInfo } from "../types";
 import { formatPrice, formatTokens, priceInUsd } from "../lib/cost";
 import { ScoreCell, TriState, UnknownMark } from "./ui";
 
-type SortKey =
+export type SortKey =
   | "name"
   | "provider"
   | "inputPrice"
@@ -14,9 +14,10 @@ type SortKey =
   | "chinese"
   | "agent";
 
-interface SortState {
+export type SortDirection = 1 | -1;
+export interface SortState {
   key: SortKey;
-  dir: 1 | -1;
+  dir: SortDirection;
 }
 
 function sortValue(m: ModelInfo, key: SortKey, cnyPerUsd: number): number | string | null {
@@ -51,13 +52,16 @@ export function ModelTable({
   models,
   cnyPerUsd,
   staleProviders,
+  sort,
+  onSortChange,
 }: {
   models: ModelInfo[];
   cnyPerUsd: number;
   /** 本次管线运行中数据源 stale 的 provider（来自 meta.pipeline） */
   staleProviders?: Set<string>;
+  sort: SortState;
+  onSortChange: (sort: SortState) => void;
 }) {
-  const [sort, setSort] = useState<SortState>({ key: "inputPrice", dir: 1 });
   const [expanded, setExpanded] = useState<string | null>(null);
 
   const sorted = useMemo(() => {
@@ -77,18 +81,27 @@ export function ModelTable({
   }, [models, sort, cnyPerUsd]);
 
   const toggleSort = (key: SortKey) =>
-    setSort((s) => (s.key === key ? { key, dir: s.dir === 1 ? -1 : 1 } : { key, dir: 1 }));
+    onSortChange(sort.key === key ? { key, dir: sort.dir === 1 ? -1 : 1 } : { key, dir: 1 });
 
   return (
     <div className="card overflow-x-auto">
-      <table className="w-full min-w-[880px] border-collapse text-sm">
+      <table aria-label="模型对照表" className="w-full min-w-[880px] border-collapse text-sm">
         <thead>
           <tr className="border-b border-line">
             {COLUMNS.map((c) => (
-              <th key={c.key} className="px-3 py-2.5">
-                <button className="th-btn" onClick={() => toggleSort(c.key)}>
+              <th
+                key={c.key}
+                className="px-3 py-2.5"
+                aria-sort={sort.key === c.key ? (sort.dir === 1 ? "ascending" : "descending") : "none"}
+              >
+                <button
+                  type="button"
+                  className="th-btn focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+                  onClick={() => toggleSort(c.key)}
+                  aria-label={`按${c.label}${sort.key === c.key && sort.dir === 1 ? "降序" : "升序"}排序`}
+                >
                   {c.label}
-                  <span className="text-[9px]">
+                  <span className="text-[9px]" aria-hidden="true">
                     {sort.key === c.key ? (sort.dir === 1 ? "▲" : "▼") : "△"}
                   </span>
                 </button>
@@ -138,13 +151,20 @@ function ModelRow({
 }) {
   return (
     <>
-      <tr
-        className="cursor-pointer border-b border-line/60 transition-colors hover:bg-accent-wash/40"
-        onClick={onToggle}
-      >
+      <tr className="border-b border-line/60 transition-colors hover:bg-accent-wash/40">
         <td className="px-3 py-2.5">
           <div className="flex items-center gap-2">
-            <span className="font-semibold">{m.name}</span>
+            <button
+              type="button"
+              className="rounded-sm text-left font-semibold hover:text-accent-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+              onClick={onToggle}
+              aria-expanded={expanded}
+              aria-controls={`model-details-${m.id}`}
+              aria-label={`${expanded ? "收起" : "展开"}${m.name}详情`}
+            >
+              <span aria-hidden="true" className="mr-1 text-[10px] text-muted">{expanded ? "▼" : "▶"}</span>
+              {m.name}
+            </button>
             {!m.verified && (
               <span
                 className="rounded bg-paper px-1 py-0.5 text-[10px] text-muted"
@@ -179,7 +199,7 @@ function ModelRow({
         <td className="px-3 py-2.5"><TriState value={m.toolUse} /></td>
       </tr>
       {expanded && (
-        <tr className="border-b border-line/60 bg-paper/60">
+        <tr id={`model-details-${m.id}`} className="border-b border-line/60 bg-paper/60">
           <td colSpan={10} className="px-4 py-3 text-xs text-ink2">
             <div className="flex flex-wrap gap-x-8 gap-y-1.5">
               <span>

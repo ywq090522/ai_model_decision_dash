@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import type { ModelInfo } from "../types";
 import { estimateAll, formatUsd } from "../lib/cost";
+import type { CostInputs } from "../lib/costStorage";
 
 function NumField({
   label,
@@ -20,11 +21,12 @@ function NumField({
       <span className="text-xs font-semibold text-ink2">{label}</span>
       <input
         type="number"
+        name={label}
         min={0}
         step={step ?? 1}
         value={value}
         onChange={(e) => onChange(Math.max(0, Number(e.target.value) || 0))}
-        className="num w-36 rounded-md border border-line bg-paper px-3 py-1.5 text-sm outline-none focus:border-accent"
+        className="num w-36 rounded-md border border-line bg-paper px-3 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
       />
       {hint && <span className="text-[11px] text-muted">{hint}</span>}
     </label>
@@ -35,14 +37,16 @@ export function CostCalculator({
   models,
   cnyPerUsd,
   onCnyPerUsdChange,
+  inputs,
+  onInputsChange,
 }: {
   models: ModelInfo[];
   cnyPerUsd: number;
   onCnyPerUsdChange: (v: number) => void;
+  inputs: Omit<CostInputs, "cnyPerUsd">;
+  onInputsChange: (inputs: Omit<CostInputs, "cnyPerUsd">) => void;
 }) {
-  const [inputTokens, setInputTokens] = useState(4000);
-  const [outputTokens, setOutputTokens] = useState(1000);
-  const [requests, setRequests] = useState(1000);
+  const { inputTokens, outputTokens, requests } = inputs;
 
   const results = useMemo(
     () => estimateAll(models, { inputTokens, outputTokens, requests, cnyPerUsd }),
@@ -56,9 +60,9 @@ export function CostCalculator({
   return (
     <div className="card p-4">
       <div className="flex flex-wrap items-end gap-5">
-        <NumField label="输入 tokens / 次" value={inputTokens} onChange={setInputTokens} step={500} hint="中文约 1 字 ≈ 1~2 tokens" />
-        <NumField label="输出 tokens / 次" value={outputTokens} onChange={setOutputTokens} step={500} />
-        <NumField label="请求次数" value={requests} onChange={setRequests} step={100} />
+        <NumField label="输入 tokens / 次" value={inputTokens} onChange={(v) => onInputsChange({ ...inputs, inputTokens: v })} step={500} hint="中文约 1 字 ≈ 1~2 tokens" />
+        <NumField label="输出 tokens / 次" value={outputTokens} onChange={(v) => onInputsChange({ ...inputs, outputTokens: v })} step={500} />
+        <NumField label="请求次数" value={requests} onChange={(v) => onInputsChange({ ...inputs, requests: v })} step={100} />
         <NumField label="汇率 (CNY/USD)" value={cnyPerUsd} onChange={onCnyPerUsdChange} step={0.1} hint="用于换算人民币计价模型" />
         <div className="ml-auto text-right">
           <div className="text-[11px] uppercase tracking-wider text-muted">计算公式</div>

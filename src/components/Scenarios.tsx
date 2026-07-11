@@ -1,9 +1,7 @@
-import { useState } from "react";
 import type { ModelInfo, ScenarioKey } from "../types";
 import { rankByScenario, SCENARIOS } from "../lib/recommend";
 
-export function Scenarios({ models, cnyPerUsd }: { models: ModelInfo[]; cnyPerUsd: number }) {
-  const [active, setActive] = useState<ScenarioKey>("coding");
+export function Scenarios({ models, cnyPerUsd, active, onChange }: { models: ModelInfo[]; cnyPerUsd: number; active: ScenarioKey; onChange: (key: ScenarioKey) => void }) {
   const def = SCENARIOS.find((s) => s.key === active)!;
   const ranked = rankByScenario(models, active, cnyPerUsd, 5);
 
@@ -14,8 +12,9 @@ export function Scenarios({ models, cnyPerUsd }: { models: ModelInfo[]; cnyPerUs
           <button
             key={s.key}
             className={`chip ${s.key === active ? "chip-active" : "hover:border-muted"}`}
-            onClick={() => setActive(s.key)}
+            onClick={() => onChange(s.key)}
             aria-pressed={s.key === active}
+            type="button"
           >
             {s.label}
           </button>

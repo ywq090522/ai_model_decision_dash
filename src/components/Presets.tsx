@@ -1,9 +1,7 @@
-import { useState } from "react";
 import type { ModelInfo, PresetKey } from "../types";
 import { PRESETS, rankByPreset } from "../lib/recommend";
 
-export function Presets({ models, cnyPerUsd }: { models: ModelInfo[]; cnyPerUsd: number }) {
-  const [active, setActive] = useState<PresetKey>("student");
+export function Presets({ models, cnyPerUsd, active, onChange }: { models: ModelInfo[]; cnyPerUsd: number; active: PresetKey; onChange: (key: PresetKey) => void }) {
   const def = PRESETS.find((p) => p.key === active)!;
   const ranked = rankByPreset(models, active, cnyPerUsd);
   const maxScore = Math.max(...ranked.map((r) => r.score), 0.001);
@@ -15,13 +13,14 @@ export function Presets({ models, cnyPerUsd }: { models: ModelInfo[]; cnyPerUsd:
         {PRESETS.map((p) => (
           <button
             key={p.key}
-            className={`rounded-md border px-3.5 py-2 text-sm font-semibold transition-colors ${
+            className={`rounded-md border px-3.5 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${
               p.key === active
                 ? "border-accent bg-accent text-white"
                 : "border-line bg-surface text-ink2 hover:border-muted"
             }`}
-            onClick={() => setActive(p.key)}
+            onClick={() => onChange(p.key)}
             aria-pressed={p.key === active}
+            type="button"
           >
             {p.label}
           </button>

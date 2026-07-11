@@ -43,6 +43,7 @@ export function FilterBar({
     title?: string;
   }) => (
     <button
+      type="button"
       className={`chip ${active ? "chip-active" : "hover:border-muted"}`}
       onClick={onClick}
       title={title}
@@ -54,17 +55,24 @@ export function FilterBar({
 
   return (
     <div className="card flex flex-wrap items-center gap-2 p-3">
+      <label htmlFor="model-search" className="sr-only">搜索模型</label>
       <input
+        id="model-search"
+        name="model-search"
         type="search"
+        autoComplete="off"
         value={filters.search}
         onChange={(e) => set({ search: e.target.value })}
         placeholder="搜索模型名 / ID / 标签…"
-        className="w-56 rounded-md border border-line bg-paper px-3 py-1.5 text-sm outline-none focus:border-accent"
+        className="w-56 rounded-md border border-line bg-paper px-3 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
       />
+      <label htmlFor="provider-filter" className="sr-only">筛选厂商</label>
       <select
+        id="provider-filter"
+        name="provider-filter"
         value={filters.provider}
         onChange={(e) => set({ provider: e.target.value })}
-        className="rounded-md border border-line bg-paper px-2 py-1.5 text-sm outline-none focus:border-accent"
+        className="rounded-md border border-line bg-paper px-2 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
       >
         <option value="all">全部厂商</option>
         {providers.map((p) => (

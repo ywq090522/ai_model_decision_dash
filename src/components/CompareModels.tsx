@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import type { ModelInfo } from "../types";
 import { MODEL_PROTOCOLS } from "../data/protocols";
 import { formatPrice, formatTokens } from "../lib/cost";
@@ -97,7 +97,8 @@ function ModelSelect({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-md border border-line bg-paper px-2 py-1.5 text-sm outline-none focus:border-accent"
+        name={label}
+        className="rounded-md border border-line bg-paper px-2 py-1.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
       >
         {models.map((m) => (
           <option key={m.id} value={m.id} disabled={m.id === exclude}>
@@ -109,9 +110,8 @@ function ModelSelect({
   );
 }
 
-export function CompareModels({ models, updatedAt }: { models: ModelInfo[]; updatedAt: string }) {
-  const [leftId, setLeftId] = useState(models[0]?.id ?? "");
-  const [rightId, setRightId] = useState(models[1]?.id ?? "");
+export function CompareModels({ models, updatedAt, value, onChange }: { models: ModelInfo[]; updatedAt: string; value: [string, string]; onChange: (value: [string, string]) => void }) {
+  const [leftId, rightId] = value;
 
   if (models.length < 2) {
     return <div className="card p-4 text-sm text-muted">至少需要两个模型才能对比。</div>;
@@ -129,7 +129,7 @@ export function CompareModels({ models, updatedAt }: { models: ModelInfo[]; upda
           models={models}
           value={left.id}
           exclude={right.id}
-          onChange={setLeftId}
+          onChange={(id) => onChange([id, right.id])}
         />
         <span className="text-xs font-semibold text-muted" aria-hidden>
           vs
@@ -139,7 +139,7 @@ export function CompareModels({ models, updatedAt }: { models: ModelInfo[]; upda
           models={models}
           value={right.id}
           exclude={left.id}
-          onChange={setRightId}
+          onChange={(id) => onChange([left.id, id])}
         />
       </div>
 

@@ -16,7 +16,7 @@ export async function runSource(def: SourceDef): Promise<SourceResult> {
       saveSnapshot(def.key, raw);
       return { def, status: "ok", fetchedAt, extracted: parseOpenRouter(raw), flags: [] };
     }
-    const text = htmlToText(raw);
+    const text = htmlToText(raw, def.providers);
     saveSnapshot(def.key, text);
     const extracted = await parseWithLLM(text);
     const { models, flags } = verifyExtraction(text, extracted);

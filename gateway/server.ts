@@ -20,6 +20,21 @@ import { buildUpstreamRequest, errorBody, GatewayError } from "./upstream";
 
 const MAX_BODY_BYTES = 20 * 1024 * 1024;
 export const DEFAULT_GATEWAY_HOST = "127.0.0.1";
+export const DEFAULT_UPSTREAM_HEADER_TIMEOUT_MS = 30_000;
+
+export function resolveUpstreamHeaderTimeout(
+  env: NodeJS.ProcessEnv = process.env,
+  warn: (message: string) => void = console.warn,
+): number {
+  const raw = env.GATEWAY_UPSTREAM_HEADER_TIMEOUT_MS;
+  if (raw === undefined || raw.trim() === "") return DEFAULT_UPSTREAM_HEADER_TIMEOUT_MS;
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value <= 0) {
+    warn(`GATEWAY_UPSTREAM_HEADER_TIMEOUT_MS 非法，使用默认值 ${DEFAULT_UPSTREAM_HEADER_TIMEOUT_MS}ms`);
+    return DEFAULT_UPSTREAM_HEADER_TIMEOUT_MS;
+  }
+  return value;
+}
 
 export function resolveGatewayHost(env: NodeJS.ProcessEnv = process.env): string {
   return env.GATEWAY_HOST?.trim() || DEFAULT_GATEWAY_HOST;
@@ -92,6 +107,7 @@ async function handleMessages(
   req: http.IncomingMessage,
   res: http.ServerResponse,
   registry: Registry,
+  headerTimeoutMs: number,
 ): Promise<void> {
   const raw = await readBody(req);
   let body: Record<string, unknown>;
@@ -121,12 +137,27 @@ async function handleMessages(
   });
 
   const upstream = buildUpstreamRequest(resolved, body);
-  const upstreamRes = await fetch(upstream.url, {
-    method: "POST",
-    headers: upstream.headers,
-    body: upstream.body,
-    signal: abort.signal,
-  });
+  let headerTimedOut = false;
+  const headerTimer = setTimeout(() => {
+    headerTimedOut = true;
+    abort.abort();
+  }, headerTimeoutMs);
+  let upstreamRes: Response;
+  try {
+    upstreamRes = await fetch(upstream.url, {
+      method: "POST",
+      headers: upstream.headers,
+      body: upstream.body,
+      signal: abort.signal,
+    });
+  } catch (error) {
+    if (headerTimedOut) {
+      throw new GatewayError(504, "api_error", "上游响应超时");
+    }
+    throw error;
+  } finally {
+    clearTimeout(headerTimer);
+  }
 
   if (resolved.provider.protocol === "openai") {
     await relayOpenAI(res, upstreamRes, modelId, body.stream === true);
@@ -201,6 +232,8 @@ function handleModels(res: http.ServerResponse, registry: Registry): void {
 
 export interface GatewayOptions {
   env?: NodeJS.ProcessEnv;
+  headerTimeoutMs?: number;
+  warn?: (message: string) => void;
 }
 
 /** registry 参数仅供测试注入 mock 上游；生产路径用 registry.json */
@@ -209,6 +242,7 @@ export function createGateway(
   options: GatewayOptions = {},
 ): http.Server {
   const env = options.env ?? process.env;
+  const headerTimeoutMs = options.headerTimeoutMs ?? resolveUpstreamHeaderTimeout(env, options.warn);
   return http.createServer((req, res) => {
     const url = req.url ?? "";
     const path = url.split("?", 1)[0];
@@ -216,7 +250,7 @@ export function createGateway(
       try {
         requireInboundAuth(req, path, env);
         if (req.method === "POST" && path === "/v1/messages") {
-          await handleMessages(req, res, registry);
+          await handleMessages(req, res, registry, headerTimeoutMs);
         } else if (req.method === "GET" && path === "/v1/models") {
           handleModels(res, registry);
         } else if (req.method === "GET" && path === "/healthz") {

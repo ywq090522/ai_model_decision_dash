@@ -2,7 +2,7 @@ import http from "node:http";
 import type { AddressInfo } from "node:net";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { Registry } from "../src/types";
-import { createGateway, resolveGatewayHost, unsafeListenReason } from "./server";
+import { createGateway, DEFAULT_UPSTREAM_HEADER_TIMEOUT_MS, resolveGatewayHost, resolveUpstreamHeaderTimeout, unsafeListenReason } from "./server";
 
 /** mock 上游：记录收到的请求，按 body.stream 返回 JSON 或 SSE 分块 */
 let upstreamSeen: { headers: http.IncomingHttpHeaders; body: Record<string, unknown> }[] = [];
@@ -25,6 +25,13 @@ function createMockUpstream(): http.Server {
           clearInterval(timer);
           endlessUpstreamClosed = true;
         });
+        return;
+      }
+      if (body.slowHeaders === true) {
+        setTimeout(() => {
+          res.writeHead(200, { "content-type": "application/json" });
+          res.end(JSON.stringify({ type: "message", content: [] }));
+        }, 100);
         return;
       }
       if (body.stream === true) {
@@ -247,6 +254,40 @@ describe("gateway server", () => {
     expect(order[0]).toBeGreaterThanOrEqual(0);
     expect(order[1]).toBeGreaterThan(order[0]);
     expect(order[2]).toBeGreaterThan(order[1]);
+  });
+
+  it("等待上游响应头超时 → 504 且返回稳定非敏感错误", async () => {
+    await withGateway({ headerTimeoutMs: 10 }, async (base) => {
+      const res = await fetch(`${base}/v1/messages`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ model: "front-x", slowHeaders: true, messages: [] }),
+      });
+      expect(res.status).toBe(504);
+      const text = await res.text();
+      expect(text).toContain("上游响应超时");
+      expect(text).not.toContain("sk-mock");
+    });
+  });
+
+  it("非法超时环境变量使用默认值并给出安全警告", () => {
+    const warn = vi.fn();
+    expect(resolveUpstreamHeaderTimeout({ GATEWAY_UPSTREAM_HEADER_TIMEOUT_MS: "oops" } as NodeJS.ProcessEnv, warn)).toBe(DEFAULT_UPSTREAM_HEADER_TIMEOUT_MS);
+    expect(warn).toHaveBeenCalledOnce();
+    expect(warn.mock.calls[0][0]).not.toContain("oops");
+  });
+
+  it("上游响应头到达后清理超时定时器", async () => {
+    const clear = vi.spyOn(globalThis, "clearTimeout");
+    await withGateway({ headerTimeoutMs: 1000 }, async (base) => {
+      const res = await fetch(`${base}/v1/messages`, {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ model: "front-x", messages: [] }),
+      });
+      expect(res.status).toBe(200);
+    });
+    expect(clear).toHaveBeenCalled();
+    clear.mockRestore();
   });
 
   it("客户端中途断开 → 网关中止上游请求，不再消费计费流", async () => {

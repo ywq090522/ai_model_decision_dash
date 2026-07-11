@@ -53,17 +53,16 @@ fetch 官方定价页（快照存 artifact）
 2. **网关鉴权与数据溯源缺陷**（`a3bb001`）：修复入站鉴权头未剥离、merge 时 source/verified 覆盖逻辑不严谨的问题。
 3. **前端泄露网关配置**（`5973ad5`、`b1fa74c`）：早期前端展示了网关/provider 信息，且 `registry.json` 被打进前端 bundle。先隐藏展示，后彻底把 registry 移出打包依赖；部署 workflow 另有 grep key 形态的泄漏自检兜底。
 4. **管线提交后 Pages 不自动部署**（`36fc0e1`）：Actions bot 的 push 不触发下游 workflow，改为数据管线提交后显式 dispatch deploy workflow。
-5. **【未决】管线运行缺 `ANTHROPIC_API_KEY`**：2026-07-07 与 07-08 两次运行中，LLM 解析的四个官方源（OpenAI / Anthropic / Google / DeepSeek）均因无密钥标 `stale`，靠 merge 兜底沿用旧值（见 `reports/2026-07-07.md`、`2026-07-08.md`）。**发布前需在 repo Secrets 配置 `ANTHROPIC_API_KEY` 并手动触发一次 "Update model data" 验证全绿。**
+5. **【已解决】管线运行曾缺 `ANTHROPIC_API_KEY`**：2026-07-07 与 07-08 两次运行中，LLM 解析的四个官方源（OpenAI / Anthropic / Google / DeepSeek）均因无密钥标 `stale`，靠 merge 兜底沿用旧值（见 `reports/2026-07-07.md`、`2026-07-08.md`）。随后一次已验收的数据产物中，OpenAI / Anthropic / Google / DeepSeek / OpenRouter 均为 `ok`（见当前 `src/data/models.json`）；这项不再是发布阻塞项。该结果只证明当前入库产物全绿，不替代后续每次管线运行的状态检查。
 6. **Qwen / 豆包无法自动抓取**：登录墙 / JS 渲染，接受为已知限制，数据走人工 fallback 并在 UI 标"未核实"。
 
 ## 5. 后续计划（v1 之后，按优先级）
 
-1. **修复管线密钥问题**（上面第 5 条，发布阻塞项）。
-2. **候选模型半自动入库**：管线报告的候选新模型自动生成 curated 草稿（评分留空供人工评定）。
-3. **缓存 / 批量成本模型**：计算器加缓存命中率滑块与批量 API 开关，利用已有 `cachedInputPrice` 字段。
-4. **Qwen / 豆包自动化**：Playwright 无头抓取或对接厂商计费 API。
-5. **分级计价**：为 Gemini / Qwen 等按输入长度分档的模型建 `priceTiers`。
-6. 自定义权重滑块、用量 CSV 导入、暗色模式（设计 token 已就绪）。
+1. **候选模型半自动入库**：管线报告的候选新模型自动生成 curated 草稿（评分留空供人工评定）。
+2. **缓存 / 批量成本模型**：计算器加缓存命中率滑块与批量 API 开关，利用已有 `cachedInputPrice` 字段。
+3. **Qwen / 豆包自动化**：Playwright 无头抓取或对接厂商计费 API。
+4. **分级计价**：为 Gemini / Qwen 等按输入长度分档的模型建 `priceTiers`。
+5. 自定义权重滑块、用量 CSV 导入、暗色模式（设计 token 已就绪）。
 
 ## 6. 发布 checklist
 
@@ -74,5 +73,5 @@ fetch 官方定价页（快照存 artifact）
 - [x] 表格行展开显示每条数据的 `source` 来源
 - [x] 前端 bundle 不含 API Key / registry（deploy workflow 有泄漏自检）
 - [x] 测试全绿（`npm test`）、类型检查通过（`npm run typecheck`）
-- [ ] repo Secrets 配置 `ANTHROPIC_API_KEY`，手动触发 "Update model data" 确认官方源全部 `ok`
+- [x] 已有验收产物确认 OpenAI / Anthropic / Google / DeepSeek / OpenRouter 全部 `ok`（当前 `src/data/models.json`）；后续运行仍需逐次检查源状态
 - [ ] Settings → Pages → Source 确认为 "GitHub Actions"，线上页面可访问且数据日期正确

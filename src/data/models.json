@@ -1,18 +1,18 @@
 {
   "meta": {
-    "updatedAt": "2026-07-08",
+    "updatedAt": "2026-07-12",
     "priceUnit": "USD or CNY per 1M tokens (see currency field)",
     "defaultCnyPerUsd": 7.2,
     "cnyRateNote": "汇率为估算值，可在成本计算器中调整。人民币计价模型的美元价格按此换算。",
     "scoreNote": "scores 为编辑评分（0-5），基于公开基准与社区口碑的主观判断，不是官方数据，欢迎按团队实测修改。",
     "unknownNote": "价格或参数为 null 表示未能从官方渠道核实（unknown），绝不编造。verified=true 表示该价格由数据管线从官方定价页抓取并通过数字回查（verifiedAt 为核实时间）；seed/第三方/手工数据一律 verified=false。",
     "pipeline": {
-      "lastRun": "2026-07-08T14:15:46.323Z",
+      "lastRun": "2026-07-12T12:41:42.776Z",
       "sources": [
         {
           "source": "OpenAI 官方定价页",
           "status": "ok",
-          "fetchedAt": "2026-07-08T14:14:54.341Z",
+          "fetchedAt": "2026-07-12T12:40:59.586Z",
           "providers": [
             "OpenAI"
           ]
@@ -20,7 +20,7 @@
         {
           "source": "Anthropic 官方定价页",
           "status": "ok",
-          "fetchedAt": "2026-07-08T14:14:54.432Z",
+          "fetchedAt": "2026-07-12T12:40:59.708Z",
           "providers": [
             "Anthropic"
           ]
@@ -28,7 +28,7 @@
         {
           "source": "Google Gemini 官方定价页",
           "status": "ok",
-          "fetchedAt": "2026-07-08T14:14:55.203Z",
+          "fetchedAt": "2026-07-12T12:41:00.408Z",
           "providers": [
             "Google"
           ]
@@ -36,7 +36,7 @@
         {
           "source": "DeepSeek 官方定价页",
           "status": "ok",
-          "fetchedAt": "2026-07-08T14:14:55.639Z",
+          "fetchedAt": "2026-07-12T12:41:00.951Z",
           "providers": [
             "DeepSeek"
           ]
@@ -44,7 +44,7 @@
         {
           "source": "OpenRouter Models API（第三方转发价）",
           "status": "ok",
-          "fetchedAt": "2026-07-08T14:14:54.562Z",
+          "fetchedAt": "2026-07-12T12:40:59.785Z",
           "providers": [
             "OpenRouter",
             "Moonshot (Kimi)",
@@ -89,9 +89,9 @@
         "推理"
       ],
       "notes": "Anthropic 最强通用模型，thinking 常开；适合最难的推理与长程 Agent 任务。",
-      "source": "Anthropic 官方定价页（2026-07-08 自动抓取）",
+      "source": "Anthropic 官方定价页（2026-07-12 自动抓取）",
       "verified": true,
-      "verifiedAt": "2026-07-08T14:14:54.432Z",
+      "verifiedAt": "2026-07-12T12:40:59.708Z",
       "verificationSource": "Anthropic 官方定价页"
     },
     {
@@ -119,9 +119,9 @@
         "代码"
       ],
       "notes": "长程 Agent / 编码主力，1M 上下文无长文本加价。",
-      "source": "Anthropic 官方定价页（2026-07-08 自动抓取）",
+      "source": "Anthropic 官方定价页（2026-07-12 自动抓取）",
       "verified": true,
-      "verifiedAt": "2026-07-08T14:14:54.432Z",
+      "verifiedAt": "2026-07-12T12:40:59.708Z",
       "verificationSource": "Anthropic 官方定价页"
     },
     {
@@ -149,9 +149,9 @@
         "长上下文"
       ],
       "notes": "接近 Opus 的编码/Agent 能力；2026-08-31 前有 $2/$10 首发优惠价。",
-      "source": "Anthropic 官方定价页（2026-07-08 自动抓取）",
+      "source": "Anthropic 官方定价页（2026-07-12 自动抓取）",
       "verified": true,
-      "verifiedAt": "2026-07-08T14:14:54.432Z",
+      "verifiedAt": "2026-07-12T12:40:59.708Z",
       "verificationSource": "Anthropic 官方定价页"
     },
     {
@@ -178,9 +178,9 @@
         "长上下文"
       ],
       "notes": "上一代 Sonnet，仍在服务；新项目建议直接用 Sonnet 5。",
-      "source": "Anthropic 官方定价页（2026-07-08 自动抓取）",
+      "source": "Anthropic 官方定价页（2026-07-12 自动抓取）",
       "verified": true,
-      "verifiedAt": "2026-07-08T14:14:54.432Z",
+      "verifiedAt": "2026-07-12T12:40:59.708Z",
       "verificationSource": "Anthropic 官方定价页"
     },
     {
@@ -207,9 +207,9 @@
         "快速"
       ],
       "notes": "简单任务、分类、高并发场景的低价选择。",
-      "source": "Anthropic 官方定价页（2026-07-08 自动抓取）",
+      "source": "Anthropic 官方定价页（2026-07-12 自动抓取）",
       "verified": true,
-      "verifiedAt": "2026-07-08T14:14:54.432Z",
+      "verifiedAt": "2026-07-12T12:40:59.708Z",
       "verificationSource": "Anthropic 官方定价页"
     },
     {
@@ -235,9 +235,9 @@
         "旗舰"
       ],
       "notes": "OpenAI 当前旗舰。官方定价页未标注上下文长度（第三方称 1M，未核实）。",
-      "source": "OpenAI 官方定价页（2026-07-08 自动抓取）",
+      "source": "OpenAI 官方定价页（2026-07-12 自动抓取）",
       "verified": true,
-      "verifiedAt": "2026-07-08T14:14:54.341Z",
+      "verifiedAt": "2026-07-12T12:40:59.586Z",
       "verificationSource": "OpenAI 官方定价页"
     },
     {
@@ -263,9 +263,9 @@
         "性价比"
       ],
       "notes": "中端主力，价格为 GPT-5.5 的一半。上下文长度未核实。",
-      "source": "OpenAI 官方定价页（2026-07-08 自动抓取）",
+      "source": "OpenAI 官方定价页（2026-07-12 自动抓取）",
       "verified": true,
-      "verifiedAt": "2026-07-08T14:14:54.341Z",
+      "verifiedAt": "2026-07-12T12:40:59.586Z",
       "verificationSource": "OpenAI 官方定价页"
     },
     {
@@ -291,9 +291,9 @@
         "低成本"
       ],
       "notes": "日常任务的低价选择。上下文长度未核实。",
-      "source": "OpenAI 官方定价页（2026-07-08 自动抓取）",
+      "source": "OpenAI 官方定价页（2026-07-12 自动抓取）",
       "verified": true,
-      "verifiedAt": "2026-07-08T14:14:54.341Z",
+      "verifiedAt": "2026-07-12T12:40:59.586Z",
       "verificationSource": "OpenAI 官方定价页"
     },
     {
@@ -320,9 +320,9 @@
         "快速"
       ],
       "notes": "分类、抽取等轻量任务。上下文长度未核实。",
-      "source": "OpenAI 官方定价页（2026-07-08 自动抓取）",
+      "source": "OpenAI 官方定价页（2026-07-12 自动抓取）",
       "verified": true,
-      "verifiedAt": "2026-07-08T14:14:54.341Z",
+      "verifiedAt": "2026-07-12T12:40:59.586Z",
       "verificationSource": "OpenAI 官方定价页"
     },
     {
@@ -349,9 +349,9 @@
         "专用"
       ],
       "notes": "编码专用模型。是否支持图片未核实。",
-      "source": "OpenAI 官方定价页（2026-07-08 自动抓取）",
+      "source": "OpenAI 官方定价页（2026-07-12 自动抓取）",
       "verified": true,
-      "verifiedAt": "2026-07-08T14:14:54.341Z",
+      "verifiedAt": "2026-07-12T12:40:59.586Z",
       "verificationSource": "OpenAI 官方定价页"
     },
     {
@@ -408,9 +408,9 @@
         "多模态"
       ],
       "notes": "Gemini 3 系最新 Flash。上下文长度未核实。",
-      "source": "Google Gemini 官方定价页（2026-07-08 自动抓取）",
+      "source": "Google Gemini 官方定价页（2026-07-12 自动抓取）",
       "verified": true,
-      "verifiedAt": "2026-07-08T14:14:55.203Z",
+      "verifiedAt": "2026-07-12T12:41:00.408Z",
       "verificationSource": "Google Gemini 官方定价页"
     },
     {
@@ -437,9 +437,9 @@
         "多模态"
       ],
       "notes": "上下文长度未核实。",
-      "source": "Google Gemini 官方定价页（2026-07-08 自动抓取）",
+      "source": "Google Gemini 官方定价页（2026-07-12 自动抓取）",
       "verified": true,
-      "verifiedAt": "2026-07-08T14:14:55.203Z",
+      "verifiedAt": "2026-07-12T12:41:00.408Z",
       "verificationSource": "Google Gemini 官方定价页"
     },
     {
@@ -466,9 +466,9 @@
         "多模态"
       ],
       "notes": "分级计价：>200K 输入 $2.50 / 输出 $15。1M 上下文，长文档性价比高。",
-      "source": "Google Gemini 官方定价页（2026-07-08 自动抓取）",
+      "source": "Google Gemini 官方定价页（2026-07-12 自动抓取）",
       "verified": true,
-      "verifiedAt": "2026-07-08T14:14:55.203Z",
+      "verifiedAt": "2026-07-12T12:41:00.408Z",
       "verificationSource": "Google Gemini 官方定价页"
     },
     {
@@ -496,9 +496,9 @@
         "多模态"
       ],
       "notes": "1M 上下文 + 极低价格，长文档批量处理利器。",
-      "source": "Google Gemini 官方定价页（2026-07-08 自动抓取）",
+      "source": "Google Gemini 官方定价页（2026-07-12 自动抓取）",
       "verified": true,
-      "verifiedAt": "2026-07-08T14:14:55.203Z",
+      "verifiedAt": "2026-07-12T12:41:00.408Z",
       "verificationSource": "Google Gemini 官方定价页"
     },
     {
@@ -525,9 +525,9 @@
         "长上下文"
       ],
       "notes": "最便宜的 1M 上下文模型之一。",
-      "source": "Google Gemini 官方定价页（2026-07-08 自动抓取）",
+      "source": "Google Gemini 官方定价页（2026-07-12 自动抓取）",
       "verified": true,
-      "verifiedAt": "2026-07-08T14:14:55.203Z",
+      "verifiedAt": "2026-07-12T12:41:00.408Z",
       "verificationSource": "Google Gemini 官方定价页"
     },
     {
@@ -556,9 +556,9 @@
         "长上下文"
       ],
       "notes": "编码/推理能力强且价格极低；缓存命中输入近乎免费。是否支持图片未核实。",
-      "source": "DeepSeek 官方定价页（2026-07-08 自动抓取）",
+      "source": "DeepSeek 官方定价页（2026-07-12 自动抓取）",
       "verified": true,
-      "verifiedAt": "2026-07-08T14:14:55.639Z",
+      "verifiedAt": "2026-07-12T12:41:00.951Z",
       "verificationSource": "DeepSeek 官方定价页"
     },
     {
@@ -586,9 +586,9 @@
         "长上下文"
       ],
       "notes": "1M 上下文 + 白菜价，中文日常与批量任务首选之一。是否支持图片未核实。",
-      "source": "DeepSeek 官方定价页（2026-07-08 自动抓取）",
+      "source": "DeepSeek 官方定价页（2026-07-12 自动抓取）",
       "verified": true,
-      "verifiedAt": "2026-07-08T14:14:55.639Z",
+      "verifiedAt": "2026-07-12T12:41:00.951Z",
       "verificationSource": "DeepSeek 官方定价页"
     },
     {
@@ -615,7 +615,7 @@
         "旗舰"
       ],
       "notes": "阿里旗舰。按输入长度分级计价，此处为最低档（≤32K）价格；不同来源报价不一致，以 Model Studio 控制台为准。视觉任务需用 Qwen3-VL 系列。",
-      "source": "OpenRouter Models API（第三方转发价）（2026-07-08 自动抓取）",
+      "source": "OpenRouter Models API（第三方转发价）（2026-07-12 自动抓取）",
       "verified": false,
       "verifiedAt": null,
       "verificationSource": null
@@ -644,7 +644,7 @@
         "中文"
       ],
       "notes": "阿里编码专用模型。当前价格未能核实（unknown），请查阿里云 Model Studio。",
-      "source": "OpenRouter Models API（第三方转发价）（2026-07-08 自动抓取）",
+      "source": "OpenRouter Models API（第三方转发价）（2026-07-12 自动抓取）",
       "verified": false,
       "verifiedAt": null,
       "verificationSource": null
@@ -654,7 +654,7 @@
       "name": "Kimi K2.6",
       "provider": "Moonshot (Kimi)",
       "currency": "USD",
-      "inputPrice": 0.65,
+      "inputPrice": 0.66,
       "outputPrice": 3.41,
       "cachedInputPrice": 0.16,
       "contextWindow": 262144,
@@ -673,7 +673,7 @@
         "Agent"
       ],
       "notes": "Moonshot 最新旗舰（2026-04），Agent/工具调用表现好。价格来自第三方汇总，未从官方页直接核实。",
-      "source": "OpenRouter Models API（第三方转发价）（2026-07-08 自动抓取）",
+      "source": "OpenRouter Models API（第三方转发价）（2026-07-12 自动抓取）",
       "verified": false,
       "verifiedAt": null,
       "verificationSource": null
@@ -702,7 +702,7 @@
         "性价比"
       ],
       "notes": "价格来自第三方汇总，未从官方页直接核实；上下文长度 unknown。",
-      "source": "OpenRouter Models API（第三方转发价）（2026-07-08 自动抓取）",
+      "source": "OpenRouter Models API（第三方转发价）（2026-07-12 自动抓取）",
       "verified": false,
       "verifiedAt": null,
       "verificationSource": null
@@ -819,7 +819,7 @@
         "开源"
       ],
       "notes": "OpenRouter 免费池，限速同上。OpenRouter 付费模型为原价转发 + 充值时 5.5% 手续费。",
-      "source": "OpenRouter Models API（第三方转发价）（2026-07-08 自动抓取）",
+      "source": "OpenRouter Models API（第三方转发价）（2026-07-12 自动抓取）",
       "verified": false,
       "verifiedAt": null,
       "verificationSource": null
